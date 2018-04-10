@@ -30,9 +30,9 @@ spec:
               - /bin/sh
               - -c
               - >
-                systemctl stop rabbitmq-server.service;
+                service rabbitmq-server stop;
                 systemctl disable rabbitmq-server.service;
-                systemctl stop redis-server.service;
+                service redis-server stop;
                 systemctl disable redis-server.service;
 
         volumeMounts:
