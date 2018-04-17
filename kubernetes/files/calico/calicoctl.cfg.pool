@@ -1,9 +1,9 @@
 {%- from "kubernetes/map.jinja" import pool with context %}
-apiVersion: projectcalico.org/v3
-kind: CalicoAPIConfig
+apiVersion: v1
+kind: calicoApiConfig
 metadata:
 spec:
-  datastoreType: "etcdv3"
+  datastoreType: "etcdv2"
   etcdEndpoints: {% for member in pool.network.calico.etcd.members %}http{% if pool.network.calico.etcd.get('ssl', {}).get('enabled') %}s{% endif %}://{{ member.host }}:{{ member.port }}{% if not loop.last %},{% endif %}{% endfor %}
 {%- if pool.network.calico.etcd.get('ssl', {}).get('enabled') %}
   etcdKeyFile: /var/lib/etcd/etcd-client.pem
