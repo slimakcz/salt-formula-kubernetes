@@ -62,7 +62,7 @@ parameters:
         virtlet:
           enabled: False
           namespace: kube-system
-          image: mirantis/virtlet:v0.8.0
+          image: mirantis/virtlet:v1.0.0
       token:
         admin: ${_param:kubernetes_admin_token}
         kubelet: ${_param:kubernetes_kubelet_token}

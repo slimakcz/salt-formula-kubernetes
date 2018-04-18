@@ -16,7 +16,7 @@ kubernetes:
       virtlet:
         enabled: true
         namespace: kube-system
-        image: mirantis/virtlet:v0.8.0
+        image: mirantis/virtlet:v1.0.0
         hosts:
         - cmp01
         - cmp02
