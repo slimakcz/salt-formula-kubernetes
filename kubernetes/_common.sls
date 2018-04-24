@@ -243,3 +243,13 @@ kubelet_service:
 
 {% endif %}
 {% endif %}
+
+{%- if common.cni is defined %}
+/opt/cni/bin:
+  archive.extracted:
+    - source: {{ common.cni.plugins.source }}
+    - source_hash: md5={{ common.cni.plugins.hash }}
+    - tar_options: xzf
+    - archive_format: tar
+    - if_missing: /opt/cni/bin/host-local
+{%- endif %}

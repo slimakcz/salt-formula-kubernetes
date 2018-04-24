@@ -1,6 +1,5 @@
 {%- from "kubernetes/map.jinja" import pool with context %}
 include:
-- kubernetes.pool.cni
 {%- if pool.network.get('calico', {}).get('enabled', False) %}
 - kubernetes.pool.calico
 {%- endif %}
