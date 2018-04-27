@@ -12,6 +12,9 @@
     - template: jinja
     - defaults:
         hostname: {{ pool.host.name }}{% if pool.host.get('domain') %}.{{ pool.host.domain }}{%- endif %}
+        {%- if pool.network.genie.default_plugin is defined %}
+        default_plugin: {{ pool.network.genie.default_plugin }}
+        {%- endif %}
 
 /tmp/genie/:
   file.directory:
