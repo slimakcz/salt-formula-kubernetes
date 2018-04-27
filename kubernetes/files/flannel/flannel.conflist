@@ -12,6 +12,7 @@
     },
     {
       "type": "portmap",
+      "cniVersion": "0.3.0",
       "capabilities": {
         "portMappings": true
       }
