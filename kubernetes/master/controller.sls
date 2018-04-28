@@ -145,7 +145,7 @@ kubernetes_basic_auth:
 {%- endif %}
 {%- endif %}
 {%- if common.addons.get('virtlet', {}).get('enabled') %}
-{%- if version|float >= 1.8 %}
+{%- if salt['pkg.version_cmp'](version,'1.8') >= 0 %}
         --feature-gates=MountPropagation=true
 {%- endif %}
 {%- endif %}

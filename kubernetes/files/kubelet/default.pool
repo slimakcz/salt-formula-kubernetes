@@ -12,7 +12,7 @@ DAEMON_ARGS="\
 --cluster_domain={{ common.addons.dns.domain|replace('_', '-') }} \
 --hostname-override={{ pool.host.name }} \
 --v={{ pool.get('verbosity', 2) }} \
-{%- if version|float >= 1.8 %}
+{%- if salt['pkg.version_cmp'](version,'1.8') >= 0 %}
 --fail-swap-on={{ pool.kubelet.fail_on_swap }} \
 {%- if common.addons.get('virtlet', {}).get('enabled') %}
 --feature-gates=MountPropagation=true \
@@ -39,7 +39,7 @@ DAEMON_ARGS="\
 {%- endif %}
 {%- if common.addons.get('virtlet', {}).get('enabled') %}
 --container-runtime={{ pool.get('container-runtime', 'remote') }} \
-{%- if version|float < 1.7 %}
+{%- if salt['pkg.version_cmp'](version,'1.7') < 0 %}
 --container-runtime-endpoint={{ pool.get('container-runtime-endpoint', '/var/run/criproxy.sock') }} \
 --image-service-endpoint={{ pool.get('image-service-endpoint', '/var/run/criproxy.sock') }} \
 {%- else %}

@@ -15,7 +15,7 @@ ExecStart=/usr/bin/criproxy -alsologtostderr \
           -listen /var/run/criproxy.sock \
           -v 3 \
           -alsologtostderr \
-{%- if version|float < 1.8 %}
+{%- if salt['pkg.version_cmp'](version,'1.8') < 0 %}
           -apiVersion {{ version }} \
 {%- endif %}
 {%- if pool.get('enabled', False) %}

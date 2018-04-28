@@ -13,7 +13,7 @@ DAEMON_ARGS="\
 --hostname-override={{ master.host.name }} \
 --v={{ master.get('verbosity', 2) }} \
 --node-labels=node-role.kubernetes.io/master=true \
-{%- if version|float >= 1.8 %}
+{%- if salt['pkg.version_cmp'](version,'1.8') >= 0 %}
 --fail-swap-on={{ master.kubelet.fail_on_swap }} \
 {%- if common.addons.get('virtlet', {}).get('enabled') %}
 --feature-gates=MountPropagation=true \
