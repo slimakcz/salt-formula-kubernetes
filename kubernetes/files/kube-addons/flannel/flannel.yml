@@ -101,7 +101,7 @@ spec:
         args:
         - --ip-masq
         - --kube-subnet-mgr
-        {%- for option, value in master.network.flannel.flanneld_options.items() %}
+        {%- for option, value in master.network.flannel.get('flanneld_options', {}).items() %}
         - --{{ option }}={{ value }}
         {%- endfor %}
         resources:
