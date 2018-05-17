@@ -18,22 +18,33 @@ install:
   - bundle install
 
 env:
-  - PLATFORM=epcim/salt-formulas:saltstack-ubuntu-xenial-salt-2016.3 SUITE=master-cluster
-  - PLATFORM=epcim/salt-formulas:saltstack-ubuntu-xenial-salt-2017.7 SUITE=master-cluster
-  - PLATFORM=epcim/salt-formulas:saltstack-ubuntu-xenial-salt-2016.3 SUITE=pool-cluster
-  - PLATFORM=epcim/salt-formulas:saltstack-ubuntu-xenial-salt-2017.7 SUITE=pool-cluster
-  - PLATFORM=epcim/salt-formulas:saltstack-ubuntu-xenial-salt-2016.3 SUITE=master-contrail
-  - PLATFORM=epcim/salt-formulas:saltstack-ubuntu-xenial-salt-2017.7 SUITE=master-contrail
-  - PLATFORM=epcim/salt-formulas:saltstack-ubuntu-xenial-salt-2016.3 SUITE=master-contrail4-0
-  - PLATFORM=epcim/salt-formulas:saltstack-ubuntu-xenial-salt-2017.7 SUITE=master-contrail4-0
-  - PLATFORM=epcim/salt-formulas:saltstack-ubuntu-xenial-salt-2016.3 SUITE=pool-contrail4-0
-  - PLATFORM=epcim/salt-formulas:saltstack-ubuntu-xenial-salt-2017.7 SUITE=pool-contrail4-0
-  - PLATFORM=epcim/salt-formulas:saltstack-ubuntu-xenial-salt-2016.3 SUITE=common-storageclass
-#  - PLATFORM=epcim/salt-formulas:saltstack-ubuntu-bionic-salt-2017.7 SUITE=master-cluster
-#  - PLATFORM=epcim/salt-formulas:saltstack-ubuntu-bionic-salt-2017.7 SUITE=pool-cluster
-#  - PLATFORM=epcim/salt-formulas:saltstack-ubuntu-bionic-salt-2017.7 SUITE=master-contrail
-#  - PLATFORM=epcim/salt-formulas:saltstack-ubuntu-bionic-salt-2017.7 SUITE=master-contrail4-0
-#  - PLATFORM=epcim/salt-formulas:saltstack-ubuntu-bionic-salt-2017.7 SUITE=pool-contrail4-0
+  - PLATFORM=epcim/salt:saltstack-ubuntu-xenial-salt-2016.3 SUITE=master-cluster
+  - PLATFORM=epcim/salt:saltstack-ubuntu-xenial-salt-2016.3 SUITE=pool-cluster
+  - PLATFORM=epcim/salt:saltstack-ubuntu-xenial-salt-2016.3 SUITE=master-contrail
+  - PLATFORM=epcim/salt:saltstack-ubuntu-xenial-salt-2016.3 SUITE=master-contrail4-0
+  - PLATFORM=epcim/salt:saltstack-ubuntu-xenial-salt-2016.3 SUITE=pool-contrail4-0
+  - PLATFORM=epcim/salt:saltstack-ubuntu-xenial-salt-2016.3 SUITE=common-storageclass
+  - PLATFORM=epcim/salt:saltstack-ubuntu-xenial-salt-2017.7 SUITE=master-cluster
+  - PLATFORM=epcim/salt:saltstack-ubuntu-xenial-salt-2017.7 SUITE=pool-cluster
+  - PLATFORM=epcim/salt:saltstack-ubuntu-xenial-salt-2017.7 SUITE=master-contrail
+  - PLATFORM=epcim/salt:saltstack-ubuntu-xenial-salt-2017.7 SUITE=master-contrail4-0
+  - PLATFORM=epcim/salt:saltstack-ubuntu-xenial-salt-2017.7 SUITE=pool-contrail4-0
+  - PLATFORM=epcim/salt:saltstack-ubuntu-xenial-salt-2018.3 SUITE=master-cluster
+  - PLATFORM=epcim/salt:saltstack-ubuntu-xenial-salt-2018.3 SUITE=pool-cluster
+  - PLATFORM=epcim/salt:saltstack-ubuntu-xenial-salt-2018.3 SUITE=master-contrail
+  - PLATFORM=epcim/salt:saltstack-ubuntu-xenial-salt-2018.3 SUITE=master-contrail4-0
+  - PLATFORM=epcim/salt:saltstack-ubuntu-xenial-salt-2018.3 SUITE=pool-contrail4-0
+  - PLATFORM=epcim/salt:saltstack-ubuntu-xenial-salt-2018.3 SUITE=common-storageclass
+#  - PLATFORM=epcim/salt:saltstack-ubuntu-bionic-salt-2017.7 SUITE=master-cluster
+#  - PLATFORM=epcim/salt:saltstack-ubuntu-bionic-salt-2017.7 SUITE=pool-cluster
+#  - PLATFORM=epcim/salt:saltstack-ubuntu-bionic-salt-2017.7 SUITE=master-contrail
+#  - PLATFORM=epcim/salt:saltstack-ubuntu-bionic-salt-2017.7 SUITE=master-contrail4-0
+#  - PLATFORM=epcim/salt:saltstack-ubuntu-bionic-salt-2017.7 SUITE=pool-contrail4-0
+#  - PLATFORM=epcim/salt:saltstack-ubuntu-bionic-salt-2018.3 SUITE=master-cluster
+#  - PLATFORM=epcim/salt:saltstack-ubuntu-bionic-salt-2018.3 SUITE=pool-cluster
+#  - PLATFORM=epcim/salt:saltstack-ubuntu-bionic-salt-2018.3 SUITE=master-contrail
+#  - PLATFORM=epcim/salt:saltstack-ubuntu-bionic-salt-2018.3 SUITE=master-contrail4-0
+#  - PLATFORM=epcim/salt:saltstack-ubuntu-bionic-salt-2018.3 SUITE=pool-contrail4-0
 
 before_script:
   - set -o pipefail
