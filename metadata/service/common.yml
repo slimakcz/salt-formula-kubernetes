@@ -35,7 +35,7 @@ parameters:
           server_image: mirantis/k8s-netchecker-server:stable
         calico_policy:
           enabled: False
-          image: calico/kube-policy-controller:v0.5.4
+          image: docker-prod-virtual.docker.mirantis.net/mirantis/projectcalico/calico/kube-controllers:v1.0.4
           namespace: kube-system
         contrail_network_controller:
           enabled: False
