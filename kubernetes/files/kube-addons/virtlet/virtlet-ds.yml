@@ -5,6 +5,7 @@
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
+  creationTimestamp: null
   name: virtlet
   namespace: {{ common.addons.virtlet.namespace }}
   labels:
@@ -12,6 +13,7 @@ metadata:
 spec:
   template:
     metadata:
+      creationTimestamp: null
       labels:
         runtime: virtlet
       name: virtlet
@@ -29,6 +31,12 @@ spec:
       - command:
         - /libvirt.sh
         env:
+        - name: VIRTLET_SRIOV_SUPPORT
+          valueFrom:
+            configMapKeyRef:
+              key: sriov_support
+              name: virtlet-config
+              optional: true
         - name: VIRTLET_DISABLE_KVM
           valueFrom:
             configMapKeyRef:
@@ -159,12 +167,6 @@ spec:
           name: k8s-pods-dir
         - mountPath: /var/log/vms
           name: vms-log
-        {%- if master.network.get('opencontrail', {}).get('enabled', False) %}
-        - name: contrail-log
-          mountPath: /var/log/contrail
-        - name: contrail-data
-          mountPath: /var/lib/contrail
-        {%- endif %}
         - mountPath: /etc/virtlet/images
           name: image-name-translations
         - mountPath: /kubernetes-log
@@ -186,9 +188,7 @@ spec:
           name: dev
         - mountPath: /lib/modules
           name: modules
-      {%- if master.network.get('opencontrail', {}).get('enabled', False) %}
       dnsPolicy: ClusterFirstWithHostNet
-      {%- endif %}
       hostNetwork: true
       hostPID: true
       initContainers:
@@ -277,17 +277,6 @@ spec:
       - configMap:
           name: virtlet-image-translations
         name: image-name-translations
-      {%- if master.network.get('opencontrail', {}).get('enabled', False) %}
-      - hostPath:
-          path: /var/log/contrail
-        name: contrail-log
-      - hostPath:
-          path: /var/lib/contrail
-        name: contrail-data
-      - hostPath:
-          path: /virtlet
-        name: virtlet-bin
-      {%- endif %}
   updateStrategy: {}
 status:
   currentNumberScheduled: 0
@@ -299,6 +288,7 @@ status:
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
+  creationTimestamp: null
   name: virtlet
   labels:
     addonmanager.kubernetes.io/mode: Reconcile
@@ -315,6 +305,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
 metadata:
+  creationTimestamp: null
   name: virtlet
   namespace: {{ common.addons.virtlet.namespace }}
   labels:
@@ -331,6 +322,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
 metadata:
+  creationTimestamp: null
   name: configmap-reader
   labels:
     addonmanager.kubernetes.io/mode: Reconcile
@@ -348,6 +340,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
 metadata:
+  creationTimestamp: null
   name: virtlet-userdata-reader
   labels:
     addonmanager.kubernetes.io/mode: Reconcile
@@ -364,6 +357,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
+  creationTimestamp: null
   name: kubelet-node-binding
   labels:
     addonmanager.kubernetes.io/mode: Reconcile
@@ -380,6 +374,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
+  creationTimestamp: null
   name: vm-userdata-binding
   labels:
     addonmanager.kubernetes.io/mode: Reconcile
@@ -396,6 +391,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
 metadata:
+  creationTimestamp: null
   name: virtlet-crd
   labels:
     addonmanager.kubernetes.io/mode: Reconcile
@@ -418,6 +414,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
+  creationTimestamp: null
   name: virtlet-crd
   labels:
     addonmanager.kubernetes.io/mode: Reconcile
@@ -434,10 +431,9 @@ subjects:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
+  creationTimestamp: null
   name: virtlet
   namespace: {{ common.addons.virtlet.namespace }}
-  labels:
-    addonmanager.kubernetes.io/mode: Reconcile
 ---
 apiVersion: v1
 data:
