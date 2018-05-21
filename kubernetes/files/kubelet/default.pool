@@ -12,6 +12,9 @@ DAEMON_ARGS="\
 --cluster_domain={{ common.addons.dns.domain|replace('_', '-') }} \
 --hostname-override={{ pool.host.name }} \
 --v={{ pool.get('verbosity', 2) }} \
+{%- if common.hyperkube.pause_image is defined %}
+--pod-infra-container-image={{ common.hyperkube.pause_image }} \
+{%- endif %}
 {%- if salt['pkg.version_cmp'](version,'1.8') >= 0 %}
 --fail-swap-on={{ pool.kubelet.fail_on_swap }} \
 {%- if common.addons.get('virtlet', {}).get('enabled') %}

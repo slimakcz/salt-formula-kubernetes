@@ -13,6 +13,9 @@ DAEMON_ARGS="\
 --hostname-override={{ master.host.name }} \
 --v={{ master.get('verbosity', 2) }} \
 --node-labels=node-role.kubernetes.io/master=true \
+{%- if common.hyperkube.pause_image is defined %}
+--pod-infra-container-image={{ common.hyperkube.pause_image }} \
+{%- endif %}
 {%- if salt['pkg.version_cmp'](version,'1.8') >= 0 %}
 --fail-swap-on={{ master.kubelet.fail_on_swap }} \
 {%- if common.addons.get('virtlet', {}).get('enabled') %}

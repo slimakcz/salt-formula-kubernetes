@@ -13,6 +13,9 @@ DAEMON_ARGS="\
 --cluster_domain={{ common.addons.dns.domain|replace('_', '-') }} \
 --hostname-override={{ pool.host.name }} \
 --v={{ pool.get('verbosity', 2) }} \
+{%- if common.hyperkube.pause_image is defined %}
+--pod-infra-container-image={{ common.hyperkube.pause_image }} \
+{%- endif %}
 {%- if pillar.kubernetes.master is defined %}
 --node-labels=node-role.kubernetes.io/master=true \
 {%-   if pillar.kubernetes.get('master', {}).get('unschedulable', 'false') %}

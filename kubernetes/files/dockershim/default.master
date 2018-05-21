@@ -14,6 +14,9 @@ DAEMON_ARGS="\
 --hostname-override={{ master.host.name }} \
 --v={{ master.get('verbosity', 2) }} \
 --node-labels=node-role.kubernetes.io/master=true \
+{%- if common.hyperkube.pause_image is defined %}
+--pod-infra-container-image={{ common.hyperkube.pause_image }} \
+{%- endif %}
 {%- if master.get('unschedulable', 'false') %}
 --register-with-taints=node-role.kubernetes.io/master=:NoSchedule \
 {%- endif %}
