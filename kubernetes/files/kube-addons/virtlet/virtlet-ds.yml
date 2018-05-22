@@ -434,6 +434,8 @@ metadata:
   creationTimestamp: null
   name: virtlet
   namespace: {{ common.addons.virtlet.namespace }}
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
 ---
 apiVersion: v1
 data:
