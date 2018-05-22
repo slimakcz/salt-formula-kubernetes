@@ -42,13 +42,17 @@ spec:
       {%- if master.auth.get('token', {}).enabled|default(True) %}
       --token-auth-file={{ master.auth.token.file|default("/srv/kubernetes/known_tokens.csv") }}
       {%- endif %}
-      --apiserver-count={{ master.apiserver.get('count', 1) }}
       --etcd-quorum-read=true
       --v={{ master.get('verbosity', 2) }}
       --allow-privileged=True
       {%- if common.addons.get('virtlet', {}).get('enabled') %}
       {%- if salt['pkg.version_cmp'](version,'1.8') >= 0 %}
         --feature-gates=MountPropagation=true
+      {%- endif %}
+      {%- if version|float >= 1.9 %}
+      --endpoint-reconciler-type={{ master.apiserver.get('endpoint-reconciler', 'lease') }}
+      {%- else %}
+      --apiserver-count={{ master.apiserver.get('count', 1) }}
       {%- endif %}
       {%- endif %}
       {%- if master.auth.get('mode') %}

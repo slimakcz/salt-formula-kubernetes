@@ -123,7 +123,6 @@ kubernetes_basic_auth:
         {%- if master.auth.get('token', {}).enabled|default(True) %}
         --token-auth-file={{ master.auth.token.file|default("/srv/kubernetes/known_tokens.csv") }}
         {%- endif %}
-        --apiserver-count={{ master.apiserver.get('count', 1) }}
         --v={{ master.get('verbosity', 2) }}
         --advertise-address={{ master.apiserver.address }}
         --etcd-servers=
@@ -148,6 +147,12 @@ kubernetes_basic_auth:
 {%- if salt['pkg.version_cmp'](version,'1.8') >= 0 %}
         --feature-gates=MountPropagation=true
 {%- endif %}
+{%- if version|float >= 1.9 %}
+        --endpoint-reconciler-type={{ master.apiserver.get('endpoint-reconciler', 'lease') }}
+{%- else %}
+        --apiserver-count={{ master.apiserver.get('count', 1) }}
+{%- endif %}
+
 {%- endif %}
 {%- for key, value in master.get('apiserver', {}).get('daemon_opts', {}).items() %}
         --{{ key }}={{ value }}
