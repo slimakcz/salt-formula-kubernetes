@@ -29,6 +29,7 @@ ExecStart=/usr/bin/docker run --net=host --privileged \
  -p {{ pool.network.calico.prometheus.get('address', '0.0.0.0') }}:{{ master.network.calico.get('prometheus', {}).get('port', 9091) }}:9091 \
 {%- endif %}
  -v /var/log/calico:/var/log/calico \
+ -v /var/lib/calico:/var/lib/calico \
  -v /run/docker/plugins:/run/docker/plugins \
  -v /lib/modules:/lib/modules \
  -v /var/run/calico:/var/run/calico \
