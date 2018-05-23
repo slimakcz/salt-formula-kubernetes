@@ -97,6 +97,8 @@ apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
   name: calico-kube-controllers
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -112,6 +114,8 @@ kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: calico-kube-controllers
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
 rules:
   - apiGroups:
     - ""
@@ -139,3 +143,5 @@ kind: ServiceAccount
 metadata:
   name: calico-kube-controllers
   namespace: {{ common.addons.calico_policy.namespace }}
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
