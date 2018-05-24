@@ -1,5 +1,6 @@
 {%- from "kubernetes/map.jinja" import master with context %}
 {%- from "kubernetes/map.jinja" import pool with context %}
+{%- from "kubernetes/map.jinja" import monitoring with context %}
 
 {%- set network = {} %}
 {%- if pool.get('enabled', False) %}
@@ -145,61 +146,110 @@ server:
           container_spec_cpu_shares{id="/"} * on(cluster,instance) machine_cpu_cores
         )
   alert:
-    AvgKubeletRunningContainerCountLow:
-      if: >-
-        avg_over_time(kubelet_running_container_count[2m]) * 1.3 <
-        avg_over_time(kubelet_running_container_count[10m])
-      {% raw %}
-      labels:
-        severity: warning
-        service: kubernetes
-      annotations:
-        summary: 'Container count is low'
-        description: 'Container count from last 2m is lower than avarage from 10m'
-      {% endraw %}
-    AvgKubeletRunningPODCountLow:
-      if: >-
-        avg_over_time(kubelet_running_pod_count[2m]) * 1.3 <
-        avg_over_time(kubelet_running_pod_count[10m])
-      {% raw %}
-      labels:
-        severity: warning
-        service: kubernetes
-      annotations:
-        summary: 'POD count is low'
-        description: 'POD count from last 2m is lower than avarage from 10m'
-      {% endraw %}
+  {%- set instance_minor_threshold_percent = monitoring.instance_minor_threshold_percent|float %}
+  {%- set instance_major_threshold_percent = monitoring.instance_major_threshold_percent|float %}
     ContainerScrapeError:
-      if: 'container_scrape_error != 0'
-      {% raw %}
+      if: "container_scrape_error != 0"
+    {% raw %}
       labels:
         severity: warning
         service: kubernetes
       annotations:
-        summary: 'Fail to scrape container'
-        description: 'Prometheus was not able to scrape metrics from container on {{ $labels.instance }}'
-      {% endraw %}
+        summary: "Failed to get the container metrics"
+        description: "Prometheus was not able to scrape metrics from the container on the {{ $labels.instance }} instance."
+    {% endraw %}
     KubernetesProcessDown:
       if: >-
         procstat_running{process_name=~"hyperkube-.*"} == 0
-      {% raw %}
+    {% raw %}
+      for: 2m
       labels:
-        severity: warning
+        severity: minor
         service: kubernetes
       annotations:
-        summary: 'Kubernetes service {{ $labels.process_name }} is down'
-        description: 'Kubernetes service {{ $labels.process_name }} is down on node {{ $labels.host }}'
-      {% endraw %}
+        summary: "Kubernetes {{ $labels.process_name }} process is down"
+        description: "Kubernetes {{ $labels.process_name }} process on the {{ $labels.host }} node is down for at least 2 minutes."
+    {% endraw %}
+    KubernetesProcessDownMinor:
+      if: >-
+        count(procstat_running{process_name=~"hyperkube-.*"} == 0) by (process_name) > count(procstat_running{process_name=~"hyperkube-.*"}) by (process_name) * {{ instance_minor_threshold_percent }}
+    {% raw %}
+      for: 2m
+      labels:
+        severity: minor
+        service: kubernetes
+      annotations:
+        summary: "{% endraw %}{{ instance_minor_threshold_percent * 100 }}%{% raw %} of Kubernetes {{ $labels.process_name }} process instances are down"
+        description: >-
+          {{ $value }} of Kubernetes {{ $labels.process_name }} process instances are down {% endraw %}(at least {{ instance_minor_threshold_percent * 100 }}%) for at least 2 minutes.
+    KubernetesProcessDownMajor:
+      if: >-
+        count(procstat_running{process_name=~"hyperkube-.*"} == 0) by (process_name) > count(procstat_running{process_name=~"hyperkube-.*"}) by (process_name) * {{ instance_major_threshold_percent }}
+      for: 2m
+      labels:
+        severity: major
+        service: kubernetes
+      annotations:
+        summary: "{{ instance_major_threshold_percent * 100 }}%{% raw %} of Kubernetes {{ $labels.process_name }} process instances are down"
+        description: >-
+          {{ $value }} of Kubernetes {{ $labels.process_name }} process instances are down {% endraw %}(at least {{ instance_major_threshold_percent * 100 }}%) for at least 2 minutes.
+    KubernetesProcessOutage:
+      if: >-
+        count(procstat_running{process_name=~"hyperkube-.*"}) by (process_name) == count(procstat_running{process_name=~"hyperkube-.*"} == 0) by (process_name)
+    {% raw %}
+      for: 2m
+      labels:
+        severity: critical
+        service: kubernetes
+      annotations:
+        summary: "Kubernetes {{ $labels.process_name }} cluster outage"
+        description: "All Kubernetes {{ $labels.process_name }} process instances are down for at least 2 minutes."
+    {% endraw %}
 {%- if network.get('calico', {}).get('enabled', False) %}
     CalicoProcessDown:
       if: >-
         procstat_running{process_name=~"calico-felix|bird|bird6|confd"} == 0
-      {% raw %}
+    {% raw %}
+      for: 2m
       labels:
-        severity: warning
+        severity: minor
         service: calico
       annotations:
-        summary: 'Calico service {{ $labels.process_name }} is down'
-        description: 'Calico service {{ $labels.process_name }} is down on node {{ $labels.host }}'
-      {% endraw %}
+        summary: "Calico {{ $labels.process_name }} process is down"
+        description: "Calico {{ $labels.process_name }} process on the {{ $labels.host }} node is down for at least 2 minutes."
+    {% endraw %}
+    CalicoProcessDownMinor:
+      if: >-
+        count(procstat_running{process_name=~"calico-felix|bird|bird6|confd"} == 0) by (process_name) > count(procstat_running{process_name=~"calico-felix|bird|bird6|confd"}) by (process_name) * {{ instance_minor_threshold_percent }}
+      for: 2m
+      labels:
+        severity: minor
+        service: calico
+      annotations:
+        summary: "{{ instance_minor_threshold_percent * 100 }}%{% raw %} of Calico {{ $labels.process_name }} process instances are down"
+        description: >-
+          {{ $value }} of Calico {{ $labels.process_name }} process instances are down {% endraw %}(at least {{ instance_minor_threshold_percent * 100 }}%) for at least 2 minutes.
+    CalicoProcessDownMajor:
+      if: >-
+        count(procstat_running{process_name=~"calico-felix|bird|bird6|confd"} == 0) by (process_name) > count(procstat_running{process_name=~"calico-felix|bird|bird6|confd"}) by (process_name) * {{ instance_major_threshold_percent }}
+      for: 2m
+      labels:
+        severity: major
+        service: calico
+      annotations:
+        summary: "{{ instance_major_threshold_percent * 100 }}%{% raw %} of Calico {{ $labels.process_name }} process instances are down"
+        description: >-
+          {{ $value }} of Calico {{ $labels.process_name }} process instances are down {% endraw %}(at least {{ instance_major_threshold_percent * 100 }}%) for at least 2 minutes.
+    CalicoProcessOutage:
+      if: >-
+        count(procstat_running{process_name=~"calico-felix|bird|bird6|confd"}) by (process_name) == count(procstat_running{process_name=~"calico-felix|bird|bird6|confd"} == 0) by (process_name)
+    {% raw %}
+      for: 2m
+      labels:
+        severity: critical
+        service: calico
+      annotations:
+        summary: "Calico {{ $labels.process_name }} cluster outage"
+        description: "All Calico {{ $labels.process_name }} process instances are down for at least 2 minutes."
+    {% endraw %}
 {% endif %}

@@ -135,3 +135,10 @@
 }) %}
 {% do pool.network.opencontrail.update(opencontrail) %}
 {%- endif %}
+
+{%- set monitoring = salt['grains.filter_by']({
+  'default': {
+    'instance_minor_threshold_percent': 0.3,
+    'instance_major_threshold_percent': 0.6,
+  },
+}, grain='os_family', merge=salt['pillar.get']('kubernetes:monitoring')) %}
