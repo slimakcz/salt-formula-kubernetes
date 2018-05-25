@@ -130,8 +130,6 @@ spec:
               optional: true
         - name: IMAGE_TRANSLATIONS_DIR
           value: /etc/virtlet/images
-        - name: KUBERNETES_POD_LOGS
-          value: /kubernetes-log
         image: {{ common.addons.virtlet.image }}
         imagePullPolicy: IfNotPresent
         name: virtlet
@@ -169,7 +167,7 @@ spec:
           name: vms-log
         - mountPath: /etc/virtlet/images
           name: image-name-translations
-        - mountPath: /kubernetes-log
+        - mountPath: /var/log/pods
           name: pods-log
       - command:
         - /vms.sh

@@ -40,7 +40,7 @@ kubernetes:
         hosts:
         - cmp01
         - cmp02
-        image: mirantis/virtlet:v1.0.0
+        image: mirantis/virtlet:v1.0.3
     monitoring:
       backend: prometheus
   master:
