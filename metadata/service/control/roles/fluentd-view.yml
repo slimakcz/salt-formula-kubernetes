@@ -1,14 +1,12 @@
-applications:
-- kubernetes
 parameters:
   kubernetes:
     control:
       role:
-        cluster-admin:
+        view:
           enabled: true
           kind: ClusterRole
           binding:
-            root-cluster-admin-binding:
+            fluentd-cluster-watch:
               subject:
-                admin:
-                  kind: User
+                system:nodes:
+                  kind: Group
