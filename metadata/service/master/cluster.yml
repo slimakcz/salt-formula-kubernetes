@@ -29,8 +29,6 @@ parameters:
         insecure_address: 127.0.0.1
         insecure_port: 8080
         count: 3
-        daemon_opts:
-          anonymous-auth: false
       etcd:
         members:
           - host: ${_param:cluster_node01_address}
@@ -53,14 +51,15 @@ parameters:
         kube-system:
           enabled: True
       network:
-        etcd:
-          members:
-          - host: ${_param:cluster_node01_address}
-            port: 4001
-          - host: ${_param:cluster_node02_address}
-            port: 4001
-          - host: ${_param:cluster_node03_address}
-            port: 4001
+        calico:
+          etcd:
+            members:
+            - host: ${_param:cluster_node01_address}
+              port: 4001
+            - host: ${_param:cluster_node02_address}
+              port: 4001
+            - host: ${_param:cluster_node03_address}
+              port: 4001
       federation:
         enabled: False
         name: federation

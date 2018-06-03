@@ -1,10 +1,10 @@
 {%- if pillar.get('fluentd', {}).get('agent', {}).get('enabled', False) %}
 {%- from "kubernetes/map.jinja" import pool, master %}
 {%- if pool.get('enabled', False) %}
-{% set network = pool.get('network', []) %}
+{% set network = pool.get('network', {}) %}
 {%- else %}
 {%- if master.get('enabled', False) %}
-{% set network = master.get('network', []) %}
+{% set network = master.get('network', {}) %}
 {% endif %}
 {% endif %}
 
@@ -12,7 +12,7 @@
 agent:
   plugin:
     fluent-plugin-kubernetes_metadata_filter:
-      gem: ['fluent-plugin-kubernetes_metadata_filter']
+      deb: ['td-agent-additional-plugins']
   config:
     label:
       docker:
@@ -36,7 +36,7 @@ agent:
               type: json
               time_format: '%Y-%m-%dT%H:%M:%S.%NZ'
               keep_time_key: false
-          {%- if network is defined and network.get('engine', None) == 'calico' %}
+          {%- if network is defined and network.get('calico', {}).get('enabled', False) %}
           bird:
             type: tail
             tag: kubernetes.calico.bird
@@ -96,7 +96,7 @@ agent:
                 value: 6
               - name: programname
                 value: ${ record['kubernetes']['container_name'] }
-          {%- if network is defined and network.get('engine', None) == 'calico' %}
+          {%- if network is defined and network.get('calico', {}).get('enabled', False) %}
           enrich_bird:
             tag: 'kubernetes.calico.bird'
             type: record_transformer

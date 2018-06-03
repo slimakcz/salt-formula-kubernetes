@@ -45,6 +45,9 @@ spec:
       annotations:
         scheduler.alpha.kubernetes.io/critical-pod: ''
         scheduler.alpha.kubernetes.io/tolerations: '[{"key":"CriticalAddonsOnly", "operator":"Exists"}]'
+{%- if common.addons.dns.cni is defined %}
+        cni: {{ common.addons.dns.cni }}
+{%- endif %}
     spec:
       tolerations:
         - key: node-role.kubernetes.io/master
@@ -111,7 +114,7 @@ spec:
           failureThreshold: 5
         args:
 {%- if common.addons.dns.get('dnsmasq', {}) %}
-{%- for option_name, option_value in common.addons.dns.dnsmasq.iteritems() %}
+{%- for option_name, option_value in common.addons.dns.dnsmasq.items() %}
         - --{{ option_name }}{% if option_value %}={{ option_value }}{% endif %}
 {%- endfor %}
 {%- endif %}
@@ -152,3 +155,4 @@ spec:
             memory: 20Mi
             cpu: 10m
       dnsPolicy: Default  # Don't use cluster DNS.
+      serviceAccountName: kube-dns

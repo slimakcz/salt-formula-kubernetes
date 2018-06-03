@@ -47,9 +47,9 @@ spec:
       {%- if service.affinity is defined %}
         scheduler.alpha.kubernetes.io/affinity: >
           {
-          {%- for affinity_name, affinity in service.affinity.iteritems() %}
+          {%- for affinity_name, affinity in service.affinity.items() %}
             "{{ affinity.name }}": {
-              {%- for expression_name, expression in affinity.expression.iteritems() %}
+              {%- for expression_name, expression in affinity.expression.items() %}
               {%- if expression.name ==  'matchExpressions' %}
               "{{ affinity.get('type','required') }}DuringSchedulingIgnoredDuringExecution": {
                 "nodeSelectorTerms": [
@@ -96,7 +96,7 @@ spec:
       hostPID: True
       {%- endif %}
       containers:
-      {%- for container_name, container in service.container.iteritems() %}
+      {%- for container_name, container in service.container.items() %}
         - name: {{ container_name }}
           image: {% if container.registry is defined %}{{ container.registry }}/{%- endif %}{{ container.image }}{%- if container.tag is defined %}:{{ container.tag }}{%- endif %}
           imagePullPolicy: {{ container.get('image_pull_policy','IfNotPresent') }}
@@ -176,7 +176,7 @@ spec:
       {%- endfor %}
       {%- if service.volume is defined %}
       volumes:
-      {%- for volume_name, volume in service.volume.iteritems() %}
+      {%- for volume_name, volume in service.volume.items() %}
         - name: {{ volume_name }}
           {%- if volume.type == 'emptyDir' %}
           emptyDir: {}
@@ -192,7 +192,7 @@ spec:
           configMap:
             name: {{ volume_name }}-{{ volume.get('version', '1') }}
             items:
-              {%- for name, item in volume.item.iteritems() %}
+              {%- for name, item in volume.item.items() %}
               - key: {{ item.key }}
                 path: {{ item.path }}
               {%- endfor %}

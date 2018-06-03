@@ -11,25 +11,26 @@ ExecStart=/usr/bin/docker run --net=host --privileged \
  -e NODENAME={{ pool.host.name }}{% if pool.host.get('domain') %}.{{ pool.host.domain }}{%- endif %} \
  -e IP={{ pool.address }} \
  -e IP6={{ pool.get('ipv6_address', '') }} \
-{%- if pool.network.calico_network_backend is defined %}
- -e CALICO_NETWORKING_BACKEND="{{ pool.network.calico_network_backend }}"
+{%- if pool.network.calico.network_backend is defined %}
+ -e CALICO_NETWORKING_BACKEND="{{ pool.network.calico.network_backend }}"
 {%- endif %}
- -e AS={{ pool.network.get('as', '64512') }} \
- -e NO_DEFAULT_POOLS={{ pool.network.get('no_default_pools') }} \
- -e CALICO_LIBNETWORK_ENABLED={{ pool.network.get('libnetwork_enabled', true ) }} \
- -e ETCD_ENDPOINTS={% for member in pool.network.etcd.members %}http{% if pool.network.etcd.get('ssl', {}).get('enabled') %}s{% endif %}://{{ member.host }}:{{ member.port }}{% if not loop.last %},{% endif %}{% endfor %} \
-{%- if pool.network.etcd.get('ssl', {}).get('enabled') %}
+ -e AS={{ pool.network.calico.get('as', '64512') }} \
+ -e NO_DEFAULT_POOLS={{ pool.network.calico.get('no_default_pools') }} \
+ -e CALICO_LIBNETWORK_ENABLED={{ pool.network.calico.get('libnetwork_enabled', true ) }} \
+ -e ETCD_ENDPOINTS={% for member in pool.network.calico.etcd.members %}http{% if pool.network.calico.etcd.get('ssl', {}).get('enabled') %}s{% endif %}://{{ member.host }}:{{ member.port }}{% if not loop.last %},{% endif %}{% endfor %} \
+{%- if pool.network.calico.etcd.get('ssl', {}).get('enabled') %}
  -e ETCD_CA_CERT_FILE=/var/lib/etcd/ca.pem \
  -e ETCD_CERT_FILE=/var/lib/etcd/etcd-client.crt \
  -e ETCD_KEY_FILE=/var/lib/etcd/etcd-client.key \
  -v /var/lib/etcd/:/var/lib/etcd/:ro \
 {%- endif %}
-{%- if pool.network.get('prometheus', {}).get('enabled') %}
+{%- if pool.network.calico.get('prometheus', {}).get('enabled') %}
  -e FELIX_PROMETHEUSMETRICSENABLED=true \
- -e FELIX_PROMETHEUSMETRICSPORT={{ pool.network.prometheus.get('port', 9091) }} \
- -p {{ pool.network.prometheus.get('address', '0.0.0.0') }}:{{ pool.network.prometheus.get('port', 9091) }}:9091 \
+ -e FELIX_PROMETHEUSMETRICSPORT={{ pool.network.calico.prometheus.get('port', 9091) }} \
+ -p {{ pool.network.calico.prometheus.get('address', '0.0.0.0') }}:{{ pool.network.calico.prometheus.get('port', 9091) }}:9091 \
 {%- endif %}
  -v /var/log/calico:/var/log/calico \
+ -v /var/lib/calico:/var/lib/calico \
  -v /run/docker/plugins:/run/docker/plugins \
  -v /lib/modules:/lib/modules \
  -v /var/run/calico:/var/run/calico \
@@ -38,7 +39,7 @@ ExecStart=/usr/bin/docker run --net=host --privileged \
  -v {{ volume }} \
 {%- endfor %}
 {%- endif %}
- {{ pool.network.get('image', 'calico/node') }}
+ {{ pool.network.calico.get('image', 'calico/node') }}
 
 Restart=always
 RestartSec=10s

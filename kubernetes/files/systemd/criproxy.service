@@ -15,7 +15,9 @@ ExecStart=/usr/bin/criproxy -alsologtostderr \
           -listen /var/run/criproxy.sock \
           -v 3 \
           -alsologtostderr \
+{%- if salt['pkg.version_cmp'](version,'1.8') < 0 %}
           -apiVersion {{ version }} \
+{%- endif %}
 {%- if pool.get('enabled', False) %}
           -streamUrl http://{{ pool.kubelet.address }}:11250
 {%- else %}

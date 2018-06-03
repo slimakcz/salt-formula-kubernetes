@@ -11,7 +11,7 @@
     - dir_mode: 755
     - template: jinja
 
-{%- if pool.network.get('version', '3.0') == '3.0' %}
+{%- if pool.network.opencontrail.get('version', '3.0') == '3.0' %}
 
 /tmp/opencontrail:
   file.directory:
@@ -20,7 +20,7 @@
 
 copy-contrail-cni:
   cmd.run:
-    - name: docker cp $(docker create  {{ pool.network.contrail_cni.image }}):/opencontrail /tmp/opencontrail
+    - name: docker cp $(docker create  {{ pool.network.opencontrail.cni_image }}):/opencontrail /tmp/opencontrail
     - require:
       - file: /tmp/opencontrail
     {%- if grains.get('noservices') %}

@@ -4,20 +4,6 @@ kubernetes_pkgs:
   pkg.installed:
   - names: {{ common.pkgs }}
 
-{%- if common.network.get('engine', 'none') == 'flannel' %}
-flannel-tar:
-  archive:
-    - extracted
-    - user: root
-    - name: /usr/local/src
-    - makedirs: True
-    - source: https://storage.googleapis.com/kubernetes-release/flannel/flannel-0.5.5-linux-amd64.tar.gz
-    - tar_options: v
-    - source_hash: md5=972c717254775bef528f040af804f2cc
-    - archive_format: tar
-    - if_missing: /usr/local/src/flannel/flannel-0.5.5/
-{%- endif %}
-
 {%- if common.hyperkube is defined %}
 /tmp/hyperkube:
   file.directory:
@@ -59,12 +45,12 @@ hyperkube-copy:
 
 /usr/bin/criproxy:
   file.managed:
-    - source: https://github.com/mirantis/criproxy/releases/download/{{ common.addons.virtlet.get('criproxy_version', 'v0.9.2') }}/criproxy
+    - source: https://github.com/mirantis/criproxy/releases/download/{{ common.addons.virtlet.get('criproxy_version', 'v0.10.0') }}/criproxy
     - mode: 750
     - makedirs: true
     - user: root
     - group: root
-    - source_hash: {{ common.addons.virtlet.get('criproxy_source', 'md5=c52d3c4e457144c6523570c847a442b2') }}
+    - source_hash: {{ common.addons.virtlet.get('criproxy_source', 'md5=52717b1f70f15558ef4bdb0e4d4948da') }}
     {%- if grains.get('noservices') %}
     - onlyif: /bin/false
     {%- endif %}
@@ -257,3 +243,13 @@ kubelet_service:
 
 {% endif %}
 {% endif %}
+
+{%- if common.cni is defined %}
+/opt/cni/bin:
+  archive.extracted:
+    - source: {{ common.cni.plugins.source }}
+    - source_hash: md5={{ common.cni.plugins.hash }}
+    - tar_options: xzf
+    - archive_format: tar
+    - if_missing: /opt/cni/bin/host-local
+{%- endif %}

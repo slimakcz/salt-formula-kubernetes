@@ -18,7 +18,11 @@ spec:
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "{{ common.addons.netchecker.port }}"
+{%- if common.addons.netchecker.cni is defined %}
+        cni: {{ common.addons.netchecker.cni }}
+{%- endif %}
     spec:
+      serviceAccountName: netchecker
       tolerations:
         - key: node-role.kubernetes.io/master
           effect: NoSchedule

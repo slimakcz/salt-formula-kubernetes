@@ -19,6 +19,10 @@ spec:
     metadata:
       labels:
         name: coredns-etcd-operator
+      annotations:
+{%- if common.addons.coredns.cni is defined %}
+        cni: {{ common.addons.coredns.cni }}
+{%- endif %}
     spec:
       tolerations:
         - key: node-role.kubernetes.io/master

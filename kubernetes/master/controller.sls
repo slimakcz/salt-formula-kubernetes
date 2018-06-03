@@ -1,5 +1,6 @@
 {%- from "kubernetes/map.jinja" import master with context %}
 {%- from "kubernetes/map.jinja" import common with context %}
+{%- from "kubernetes/map.jinja" import version %}
 {%- if master.enabled %}
 
 {%- if master.auth.get('token', {}).enabled|default(True) %}
@@ -111,9 +112,7 @@ kubernetes_basic_auth:
         --requestheader-extra-headers-prefix={{ master.auth.proxy.header.extra }}
         --requestheader-client-ca-file={{ master.auth.proxy.ca_file|default("/etc/kubernetes/ssl/ca-"+master.ca+".crt") }}
         {%- endif %}
-        {%- if master.auth.get('anonymous', False) %}
-        --anonymous-auth=true
-        {%- endif %}
+        --anonymous-auth={{ master.auth.get('anonymous', {}).enabled|default(False) }}
         --etcd-quorum-read=true
         --insecure-bind-address={{ master.apiserver.insecure_address }}
         --insecure-port={{ master.apiserver.insecure_port }}
@@ -124,7 +123,6 @@ kubernetes_basic_auth:
         {%- if master.auth.get('token', {}).enabled|default(True) %}
         --token-auth-file={{ master.auth.token.file|default("/srv/kubernetes/known_tokens.csv") }}
         {%- endif %}
-        --apiserver-count={{ master.apiserver.get('count', 1) }}
         --v={{ master.get('verbosity', 2) }}
         --advertise-address={{ master.apiserver.address }}
         --etcd-servers=
@@ -145,7 +143,18 @@ kubernetes_basic_auth:
         --cloud-config=/etc/kubernetes/cloud-config.conf
 {%- endif %}
 {%- endif %}
-{%- for key, value in master.get('apiserver', {}).get('daemon_opts', {}).iteritems() %}
+{%- if common.addons.get('virtlet', {}).get('enabled') %}
+{%- if salt['pkg.version_cmp'](version,'1.8') >= 0 %}
+        --feature-gates=MountPropagation=true
+{%- endif %}
+{%- if version|float >= 1.9 %}
+        --endpoint-reconciler-type={{ master.apiserver.get('endpoint-reconciler', 'lease') }}
+{%- else %}
+        --apiserver-count={{ master.apiserver.get('count', 1) }}
+{%- endif %}
+
+{%- endif %}
+{%- for key, value in master.get('apiserver', {}).get('daemon_opts', {}).items() %}
         --{{ key }}={{ value }}
 {%- endfor %}"
 
@@ -176,6 +185,7 @@ kubernetes_basic_auth:
         --leader-elect=true
         --root-ca-file=/etc/kubernetes/ssl/ca-{{ master.ca }}.crt
         --service-account-private-key-file=/etc/kubernetes/ssl/kubernetes-server.key
+        --use-service-account-credentials
 {%- if common.get('cloudprovider', {}).get('enabled') %}
         --cloud-provider={{ common.cloudprovider.provider }}
 {%- if common.get('cloudprovider', {}).get('provider') == 'openstack' %}
@@ -183,7 +193,11 @@ kubernetes_basic_auth:
 {%- endif %}
 {%- endif %}
         --v={{ master.get('verbosity', 2) }}
-{%- for key, value in master.get('controller_manager', {}).get('daemon_opts', {}).iteritems() %}
+{%- if master.network.get('flannel', {}).get('enabled', False) %}
+        --allocate-node-cidrs=true
+        --cluster-cidr={{ master.network.flannel.private_ip_range }}
+{%- endif %}
+{%- for key, value in master.get('controller_manager', {}).get('daemon_opts', {}).items() %}
         --{{ key }}={{ value }}
 {% endfor %}"
 
@@ -197,7 +211,7 @@ kubernetes_basic_auth:
         --kubeconfig /etc/kubernetes/scheduler.kubeconfig
         --leader-elect=true
         --v={{ master.get('verbosity', 2) }}
-{%- for key, value in master.get('scheduler', {}).get('daemon_opts', {}).iteritems() %}
+{%- for key, value in master.get('scheduler', {}).get('daemon_opts', {}).items() %}
         --{{ key }}={{ value }}
 {% endfor %}"
 
@@ -255,7 +269,7 @@ master_services:
 {%- endif %}
 
 
-{%- for name,namespace in master.namespace.iteritems() %}
+{%- for name,namespace in master.namespace.items() %}
 
 {%- if namespace.enabled %}
 
@@ -281,7 +295,7 @@ kubernetes_namespace_delete_{{ name }}:
 
 {%- if master.registry.secret is defined %}
 
-{%- for name,registry in master.registry.secret.iteritems() %}
+{%- for name,registry in master.registry.secret.items() %}
 
 {%- if registry.enabled %}
 

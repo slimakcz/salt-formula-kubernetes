@@ -2,8 +2,6 @@ kubernetes:
   common:
     cluster_domain: cluster.local
     cluster_name: cluster
-    network:
-      engine: none
     hyperkube:
       image: hyperkube-amd64:v1.6.4-3
       hash: hnsj0XqABgrSww7Nqo7UVTSZLJUt2XRd
@@ -18,10 +16,12 @@ kubernetes:
       virtlet:
         enabled: true
         namespace: kube-system
-        image: mirantis/virtlet:v0.8.0
+        image: mirantis/virtlet:v1.0.3
         hosts:
         - cmp01
         - cmp02
+    monitoring:
+      backend: prometheus
   pool:
     enabled: true
     version: v1.2.0
@@ -48,8 +48,9 @@ kubernetes:
       kube_proxy: DFvQ8GelB7afH3wClC9romaMPhquyyEe
     ca: kubernetes
     network:
-      engine: opencontrail
-      version: 4.0
-      config:
-        api:
-          host: 127.0.0.1
+      opencontrail:
+        enabled: true
+        version: 4.0
+        config:
+          api:
+            host: 127.0.0.1

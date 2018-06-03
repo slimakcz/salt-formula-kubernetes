@@ -16,6 +16,10 @@ spec:
     metadata:
       labels:
         app: external-dns
+      annotations:
+{%- if common.addons.externaldns.cni is defined %}
+        cni: {{ common.addons.externaldns.cni }}
+{%- endif %}
     spec:
       tolerations:
         - key: node-role.kubernetes.io/master

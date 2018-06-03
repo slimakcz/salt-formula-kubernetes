@@ -19,6 +19,10 @@ spec:
       labels:
         k8s-app: kube-registry
         version: v0
+      annotations:
+{%- if common.addons.registry.cni is defined %}
+        cni: {{ common.addons.registry.cni }}
+{%- endif %}
     spec:
       tolerations:
         - key: node-role.kubernetes.io/master

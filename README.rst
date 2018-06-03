@@ -33,10 +33,9 @@ Sample Pillars
             image: gcr.io/google_containers/hyperkube:v1.6.5
         pool:
           network:
-            calicoctl:
-              image: calico/ctl
-            cni:
-              image: calico/cni
+            calico:
+              calicoctl_image: calico/ctl
+              cni_image: calico/cni
 
 Enable helm-tiller addon
 
@@ -71,7 +70,7 @@ Enable virtlet addon
             virtlet:
               enabled: true
               namespace: kube-system
-              image: mirantis/virtlet:v0.8.0
+              image: mirantis/virtlet:v1.0.3
               hosts:
               - cmp01
               - cmp02
@@ -319,11 +318,8 @@ Master definition
           kubelet:
             allow_privileged: true
           network:
-            engine: calico
-            mtu: 1500
-            hash: fb5e30ebe6154911a66ec3fb5f1195b2
-            private_ip_range: 10.150.0.0/16
-            version: v0.19.0
+            calico:
+              enabled: true
           service_addresses: 10.254.0.0/16
           storage:
             engine: glusterfs
@@ -368,10 +364,8 @@ Master definition
               - host: 10.0.175.100
             host: 10.0.175.100
           network:
-            engine: calico
-            mtu: 1500
-            hash: fb5e30ebe6154911a66ec3fb5f1195b2
-            version: v0.19.0
+            calico:
+              enabled: true
           token:
             kube_proxy: DFvQ8GelB7afH3wClC9romaMPhquyyEe
             kubelet: 7bN5hJ9JD4fKjnFTkUKsvVNfuyEddw3r
@@ -424,19 +418,20 @@ On Master:
             image: yashulyak/contrail-controller:latest
       master:
         network:
-          engine: opencontrail
-          default_domain: default-domain
-          default_project: default-domain:default-project
-          public_network: default-domain:default-project:Public
-          public_ip_range: 185.22.97.128/26
-          private_ip_range: 10.150.0.0/16
-          service_cluster_ip_range: 10.254.0.0/16
-          network_label: name
-          service_label: uses
-          cluster_service: kube-system/default
-          config:
-            api:
-              host: 10.0.170.70
+          opencontrail:
+            enabled: true
+            default_domain: default-domain
+            default_project: default-domain:default-project
+            public_network: default-domain:default-project:Public
+            public_ip_range: 185.22.97.128/26
+            private_ip_range: 10.150.0.0/16
+            service_cluster_ip_range: 10.254.0.0/16
+            network_label: name
+            service_label: uses
+            cluster_service: kube-system/default
+            config:
+              api:
+                host: 10.0.170.70
 On pools:
 
 .. code-block:: yaml
@@ -444,7 +439,8 @@ On pools:
     kubernetes:
       pool:
         network:
-          engine: opencontrail
+          opencontrail:
+            enabled: true
 
 
 Dashboard public IP must be configured when Contrail network is used:
@@ -490,19 +486,8 @@ On Master:
     kubernetes:
       master:
         network:
-          engine: flannel
-    # If you don't register master as node:
-          etcd:
-            members:
-              - host: 10.0.175.101
-                port: 4001
-              - host: 10.0.175.102
-                port: 4001
-              - host: 10.0.175.103
-                port: 4001
-      common:
-        network:
-          engine: flannel
+          flannel:
+            enabled: true
 
 On pools:
 
@@ -511,18 +496,8 @@ On pools:
     kubernetes:
       pool:
         network:
-          engine: flannel
-          etcd:
-            members:
-              - host: 10.0.175.101
-                port: 4001
-              - host: 10.0.175.102
-                port: 4001
-              - host: 10.0.175.103
-                port: 4001
-      common:
-        network:
-          engine: flannel
+          flannel:
+            enabled: true
 
 Kubernetes with Calico
 -----------------------
@@ -534,17 +509,18 @@ On Master:
     kubernetes:
       master:
         network:
-          engine: calico
-          mtu: 1500
+          calico:
+            enabled: true
+            mtu: 1500
     # If you don't register master as node:
-          etcd:
-            members:
-              - host: 10.0.175.101
-                port: 4001
-              - host: 10.0.175.102
-                port: 4001
-              - host: 10.0.175.103
-                port: 4001
+            etcd:
+              members:
+                - host: 10.0.175.101
+                  port: 4001
+                - host: 10.0.175.102
+                  port: 4001
+                - host: 10.0.175.103
+                  port: 4001
 
 On pools:
 
@@ -553,16 +529,17 @@ On pools:
     kubernetes:
       pool:
         network:
-          engine: calico
-          mtu: 1500
-          etcd:
-            members:
-              - host: 10.0.175.101
-                port: 4001
-              - host: 10.0.175.102
-                port: 4001
-              - host: 10.0.175.103
-                port: 4001
+          calico:
+            enabled: true
+            mtu: 1500
+            etcd:
+              members:
+                - host: 10.0.175.101
+                  port: 4001
+                - host: 10.0.175.102
+                  port: 4001
+                - host: 10.0.175.103
+                  port: 4001
 
 Running with secured etcd:
 
@@ -571,17 +548,18 @@ Running with secured etcd:
     kubernetes:
       pool:
         network:
-          engine: calico
-          mtu: 1500
-          etcd:
-            ssl:
-              enabled: true
+          calico:
+            enabled: true
+            etcd:
+              ssl:
+                enabled: true
       master:
         network:
-          engine: calico
-          etcd:
-            ssl:
-              enabled: true
+          calico:
+            enabled: true
+            etcd:
+              ssl:
+                enabled: true
 
 Running with calico-policy controller:
 
@@ -590,16 +568,16 @@ Running with calico-policy controller:
     kubernetes:
       pool:
         network:
-          engine: calico
-          mtu: 1500
+          calico:
+            enabled: true
           addons:
             calico_policy:
               enabled: true
 
       master:
         network:
-          engine: calico
-          mtu: 1500
+          calico:
+            enabled: true
           addons:
             calico_policy:
               enabled: true
@@ -613,12 +591,14 @@ Enable Prometheus metrics in Felix
     kubernetes:
       pool:
         network:
-          prometheus:
-            enabled: true
+          calico:
+            prometheus:
+              enabled: true
       master:
         network:
-          prometheus:
-            enabled: true
+          calico:
+            prometheus:
+              enabled: true
 
 Post deployment configuration
 
@@ -1083,7 +1063,7 @@ To enable RBAC, you need to set following option on your apiserver:
     kubernetes:
       master:
         auth:
-          mode: RBAC
+          mode: Node,RBAC
 
 Then you can use ``kubernetes.control.role`` state to orchestrate role and
 rolebindings. Following example shows how to create brand new role and binding

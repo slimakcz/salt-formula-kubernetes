@@ -2,8 +2,6 @@ kubernetes:
   common:
     cluster_domain: cluster.local
     cluster_name: cluster
-    network:
-      engine: opencontrail
     hyperkube:
       image: hyperkube-amd64:v1.6.4-3
       hash: hnsj0XqABgrSww7Nqo7UVTSZLJUt2XRd
@@ -39,10 +37,12 @@ kubernetes:
       virtlet:
         enabled: true
         namespace: kube-system
-        image: mirantis/virtlet:v0.8.0
+        image: mirantis/virtlet:v1.0.3
         hosts:
         - cmp01
         - cmp02
+    monitoring:
+      backend: prometheus
   master:
     service_addresses: 127.0.0.1/24
     admin:
@@ -69,26 +69,27 @@ kubernetes:
       address: 10.0.175.100
       allow_privileged: true
     network:
-      engine: opencontrail
-      version: 4.0
-      private_ip_range: 10.150.0.0/16
-      config:
-        api:
+      opencontrail:
+        enabled: true
+        version: 4.0
+        private_ip_range: 10.150.0.0/16
+        config:
+          api:
+            host: 127.0.0.1
+        message_queue:
           host: 127.0.0.1
-      message_queue:
-        host: 127.0.0.1
-      identity:
-        password: password
-      database:
-        members:
-        - host: 127.0.0.1
-        - host: 127.0.0.1
-        - host: 127.0.0.1
-      collector:
-        members:
-        - host: 127.0.0.1
-        - host: 127.0.0.1
-        - host: 127.0.0.1
+        identity:
+          password: password
+        database:
+          members:
+          - host: 127.0.0.1
+          - host: 127.0.0.1
+          - host: 127.0.0.1
+        collector:
+          members:
+          - host: 127.0.0.1
+          - host: 127.0.0.1
+          - host: 127.0.0.1
     storage:
       engine: glusterfs
       members:

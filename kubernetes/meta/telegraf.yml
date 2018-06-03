@@ -2,10 +2,10 @@
 {%- from "kubernetes/map.jinja" import pool with context %}
 
 {%- if pool.get('enabled', False) %}
-{% set network = pool.get('network', []) %}
+{% set network = pool.get('network', {}) %}
 {%- else %}
 {%- if master.get('enabled', False) %}
-{% set network = master.get('network', []) %}
+{% set network = master.get('network', {}) %}
 {% endif %}
 {% endif %}
 
@@ -15,20 +15,20 @@ agent:
     procstat:
       process:
   {%- if master.get('enabled', False) %}
-        hypercube-apiserver:
+        hyperkube-apiserver:
           pattern: "hyperkube.*apiserver"
-        hypercube-scheduler:
+        hyperkube-scheduler:
           pattern: "hyperkube.*scheduler"
-        hypercube-controller-manager:
+        hyperkube-controller-manager:
           pattern: "hyperkube.*controller-manager"
   {%- endif %}
   {%- if pool.get('enabled', False) %}
-        hypercube-kubelet:
+        hyperkube-kubelet:
           pattern: "hyperkube.*kubelet"
-        hypercube-proxy:
-          pattern: "hyperkube.*proxy"
   {%- endif %}
-  {%- if network is defined and network.get('engine', None) == 'calico' %}
+  {%- if network is defined and network.get('calico', {}).get('enabled', False) %}
+        hyperkube-proxy:
+          pattern: "hyperkube.*proxy"
         calico-docker:
           pattern: "docker run .*projectcalico/calico/node"
         calico-felix:

@@ -9,7 +9,17 @@ addon-dir-create:
     - group: root
     - mode: 0755
 
-{%- if master.network.engine == "opencontrail" and master.network.get('version', 3.0) < 4.0 %}
+{%- if master.network.get('flannel', {}).get('enabled', False) %}
+/etc/kubernetes/addons/flannel/flannel.yml:
+  file.managed:
+    - source: salt://kubernetes/files/kube-addons/flannel/flannel.yml
+    - template: jinja
+    - group: root
+    - dir_mode: 755
+    - makedirs: True
+{% endif %}
+
+{%- if master.network.get('opencontrail', {}).get('enabled', False) and master.network.opencontrail.get('version', 3.0) < 4.0 %}
 /etc/kubernetes/addons/contrail-network-controller/contrail-network-controller-configmap.yml:
   file.managed:
     - source: salt://kubernetes/files/kube-addons/contrail-network-controller/contrail-network-controller-configmap.yml
@@ -21,6 +31,24 @@ addon-dir-create:
 /etc/kubernetes/addons/contrail-network-controller/contrail-network-controller-deploy.yml:
   file.managed:
     - source: salt://kubernetes/files/kube-addons/contrail-network-controller/contrail-network-controller-deploy.yml
+    - template: jinja
+    - group: root
+    - dir_mode: 755
+    - makedirs: True
+
+{%- elif master.network.get('opencontrail', {}).get('enabled', False) and master.network.opencontrail.get('version', 3.0) > 3.0 %}
+
+/etc/kubernetes/addons/contrail/contrail.yaml:
+  file.managed:
+    - source: salt://kubernetes/files/kube-addons/contrail/contrail.yaml
+    - template: jinja
+    - group: root
+    - dir_mode: 755
+    - makedirs: True
+
+/etc/kubernetes/addons/contrail/kube-manager.yaml:
+  file.managed:
+    - source: salt://kubernetes/files/kube-addons/contrail/kube-manager.yaml
     - template: jinja
     - group: root
     - dir_mode: 755
@@ -39,7 +67,7 @@ addon-dir-create:
 
 {% endif %}
 
-{%- if common.addons.get('calico_policy', {}).get('enabled', False) and master.network.engine == "calico" %}
+{%- if common.addons.get('calico_policy', {}).get('enabled', False) and master.network.get('calico', {}).get('enabled', False) %}
 /etc/kubernetes/addons/calico_policy/calico-policy-controller.yml:
   file.managed:
     - source: salt://kubernetes/files/kube-addons/calico-policy/calico-policy-controller.yml
@@ -60,11 +88,31 @@ addon-dir-create:
     - dir_mode: 755
     - makedirs: True
 
+{%- if 'RBAC' in master.auth.get('mode', "") %}
+
+/etc/kubernetes/addons/helm/helm-role.yml:
+  file.managed:
+    - source: salt://kubernetes/files/kube-addons/helm/helm-role.yml
+    - template: jinja
+    - group: root
+    - dir_mode: 755
+    - makedirs: True
+
+/etc/kubernetes/addons/helm/helm-serviceaccount.yml:
+  file.managed:
+    - source: salt://kubernetes/files/kube-addons/helm/helm-serviceaccount.yml
+    - template: jinja
+    - group: root
+    - dir_mode: 755
+    - makedirs: True
+
+{%- endif %}
+
 {% endif %}
 
 {%- if common.addons.storageclass is defined %}
 
-{%- for storageclass_name, storageclass in common.addons.get('storageclass', {}).iteritems() %}
+{%- for storageclass_name, storageclass in common.addons.get('storageclass', {}).items() %}
 {%- set storageclass_name = storageclass.get('name', storageclass_name) %}
 
 /etc/kubernetes/addons/storageclass/{{ storageclass_name }}.yaml:
@@ -84,7 +132,15 @@ addon-dir-create:
 
 {%- if common.addons.get('netchecker', {'enabled': False}).enabled %}
 
-{%- for resource in ['svc', 'server', 'agent'] %}
+{%- set netchecker_resources = ['svc', 'server', 'agent', 'serviceaccount'] %}
+
+{%- if 'RBAC' in master.auth.get('mode', "") %}
+
+{%- set netchecker_resources = netchecker_resources + ['roles'] %}
+
+{%- endif %}
+
+{%- for resource in netchecker_resources %}
 
 /etc/kubernetes/addons/netchecker/netchecker-{{ resource }}.yml:
   file.managed:
@@ -97,6 +153,22 @@ addon-dir-create:
 {%- endfor %}
 
 {% endif %}
+
+{%- if common.monitoring.get('backend', "") == 'prometheus' %}
+
+{%- if 'RBAC' in master.auth.get('mode', "") %}
+
+/etc/kubernetes/addons/prometheus/prometheus-roles.yml:
+  file.managed:
+    - source: salt://kubernetes/files/kube-addons/prometheus/prometheus-roles.yml
+    - template: jinja
+    - group: root
+    - dir_mode: 755
+    - makedirs: True
+
+{%- endif %}
+
+{%- endif %}
 
 {%- if common.addons.get('dns', {'enabled': False}).enabled %}
 
@@ -116,6 +188,14 @@ addon-dir-create:
     - dir_mode: 755
     - makedirs: True
 
+/etc/kubernetes/addons/dns/kubedns-sa.yaml:
+  file.managed:
+    - source: salt://kubernetes/files/kube-addons/dns/kubedns-sa.yaml
+    - template: jinja
+    - group: root
+    - dir_mode: 755
+    - makedirs: True
+
 {% if common.addons.dns.get('autoscaler', {}).get('enabled', True) %}
 
 /etc/kubernetes/addons/dns/kubedns-autoscaler.yaml:
@@ -125,6 +205,26 @@ addon-dir-create:
     - group: root
     - dir_mode: 755
     - makedirs: True
+
+{%- if 'RBAC' in master.auth.get('mode', "") %}
+
+/etc/kubernetes/addons/dns/kubedns-autoscaler-rbac.yaml:
+  file.managed:
+    - source: salt://kubernetes/files/kube-addons/dns/kubedns-autoscaler-rbac.yaml
+    - template: jinja
+    - group: root
+    - dir_mode: 755
+    - makedirs: True
+
+/etc/kubernetes/addons/dns/kubedns-clusterrole.yaml:
+  file.managed:
+    - source: salt://kubernetes/files/kube-addons/dns/kubedns-clusterrole.yaml
+    - template: jinja
+    - group: root
+    - dir_mode: 755
+    - makedirs: True
+
+{% endif %}
 
 {% endif %}
 
@@ -233,53 +333,39 @@ addon-dir-create:
 
 {%- if common.addons.get('heapster_influxdb', {'enabled': False}).enabled %}
 
-/etc/kubernetes/addons/heapster-influxdb/heapster-address.yaml:
+{%- set heapster_resources = ['address', 'controller', 'endpoint', 'service'] %}
+
+{%- if 'RBAC' in master.auth.get('mode', "") %}
+
+{%- set heapster_resources = heapster_resources + ['account', 'role'] %}
+
+{%- endif %}
+
+{%- for resource in heapster_resources %}
+
+/etc/kubernetes/addons/heapster-influxdb/heapster-{{ resource }}.yaml:
   file.managed:
-    - source: salt://kubernetes/files/kube-addons/heapster-influxdb/heapster-address.yaml
+    - source: salt://kubernetes/files/kube-addons/heapster-influxdb/heapster-{{ resource }}.yaml
     - template: jinja
     - group: root
     - dir_mode: 755
     - makedirs: True
 
-/etc/kubernetes/addons/heapster-influxdb/heapster-controller.yaml:
+{%- endfor %}
+
+{%- set influxdb_resources = ['controller', 'service'] %}
+
+{%- for resource in influxdb_resources %}
+
+/etc/kubernetes/addons/heapster-influxdb/influxdb-{{ resource }}.yaml:
   file.managed:
-    - source: salt://kubernetes/files/kube-addons/heapster-influxdb/heapster-controller.yaml
+    - source: salt://kubernetes/files/kube-addons/heapster-influxdb/influxdb-{{ resource }}.yaml
     - template: jinja
     - group: root
     - dir_mode: 755
     - makedirs: True
 
-/etc/kubernetes/addons/heapster-influxdb/heapster-endpoint.yaml:
-  file.managed:
-    - source: salt://kubernetes/files/kube-addons/heapster-influxdb/heapster-endpoint.yaml
-    - template: jinja
-    - group: root
-    - dir_mode: 755
-    - makedirs: True
-
-/etc/kubernetes/addons/heapster-influxdb/heapster-service.yaml:
-  file.managed:
-    - source: salt://kubernetes/files/kube-addons/heapster-influxdb/heapster-service.yaml
-    - template: jinja
-    - group: root
-    - dir_mode: 755
-    - makedirs: True
-
-/etc/kubernetes/addons/heapster-influxdb/influxdb-controller.yaml:
-  file.managed:
-    - source: salt://kubernetes/files/kube-addons/heapster-influxdb/influxdb-controller.yaml
-    - template: jinja
-    - group: root
-    - dir_mode: 755
-    - makedirs: True
-
-/etc/kubernetes/addons/heapster-influxdb/influxdb-service.yaml:
-  file.managed:
-    - source: salt://kubernetes/files/kube-addons/heapster-influxdb/influxdb-service.yaml
-    - template: jinja
-    - group: root
-    - dir_mode: 755
-    - makedirs: True
+{%- endfor %}
 
 {% endif %}
 

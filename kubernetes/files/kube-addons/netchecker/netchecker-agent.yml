@@ -13,6 +13,10 @@ spec:
       name: netchecker-agent
       labels:
         app: netchecker-agent
+      annotations:
+{%- if common.addons.netchecker.cni is defined %}
+        cni: {{ common.addons.netchecker.cni }}
+{%- endif %}
     spec:
       tolerations:
         - key: node-role.kubernetes.io/master

@@ -35,7 +35,7 @@ parameters:
           server_image: mirantis/k8s-netchecker-server:stable
         calico_policy:
           enabled: False
-          image: calico/kube-policy-controller:v0.5.4
+          image: docker-prod-virtual.docker.mirantis.net/mirantis/projectcalico/calico/kube-controllers:v1.0.4
           namespace: kube-system
         contrail_network_controller:
           enabled: False
@@ -58,9 +58,13 @@ parameters:
         virtlet:
           enabled: False
           namespace: kube-system
-          image: mirantis/virtlet:v0.9.2
-          criproxy_version: v0.9.2
-          criproxy_source: md5=c52d3c4e457144c6523570c847a442b2
+          image: mirantis/virtlet:v1.0.3
+          criproxy_version: v0.10.0
+          criproxy_source: md5=52717b1f70f15558ef4bdb0e4d4948da
+      cni:
+        plugins:
+          source: https://github.com/containernetworking/plugins/releases/download/v0.7.1/cni-plugins-amd64-v0.7.1.tgz
+          hash: e7e5751d43456f69ea1ed043647e0377
       cloudprovider:
         enabled: False
         provider: openstack
@@ -69,6 +73,3 @@ parameters:
           domain_name: default
       cluster_domain: ${_param:kubernetes_cluster_domain}
       cluster_name: ${_param:cluster_name}
-      network:
-        engine: none
-        mtu: 1500

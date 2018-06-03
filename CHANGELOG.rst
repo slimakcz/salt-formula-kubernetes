@@ -1,6 +1,11 @@
 kubernetes formula
 ==================
 
+2018.3.1 (2018-03-15)
+
+- deprecate network.engine field
+- use subsection in network for CNI related setting
+
 2017.1.2 (2017-01-19)
 
 - fix cni copy order

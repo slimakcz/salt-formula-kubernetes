@@ -6,7 +6,7 @@ metadata:
   namespace: {{ binding.namespace }}
   {%- endif %}
 subjects:
-  {%- for subject_name, subject in binding.subject.iteritems() %}
+  {%- for subject_name, subject in binding.subject.items() %}
   - kind: {{ subject.kind }}
     name: {{ subject.name|default(subject_name) }}
     apiGroup: rbac.authorization.k8s.io

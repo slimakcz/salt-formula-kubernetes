@@ -2,7 +2,7 @@
 include:
   - kubernetes.control
 
-{%- for job_name, job in control.job.iteritems() %}
+{%- for job_name, job in control.job.items() %}
 
 /srv/kubernetes/jobs/{{ job_name }}-job.yml:
   file.managed:

@@ -2,16 +2,16 @@
 {%- from "kubernetes/map.jinja" import pool with context %}
 
 {%- if pool.get('enabled', False) %}
-{% set network = pool.get('network', []) %}
+{% set network = pool.get('network', {}) %}
 {%- else %}
 {%- if master.get('enabled', False) %}
-{% set network = master.get('network', []) %}
+{% set network = master.get('network', {}) %}
 {% endif %}
 {% endif %}
 
 {%- if master.get('enabled', False) or pool.get('enabled', False) %}
 local_plugin:
-  {%- if network is defined and network.get('engine', None) == 'calico' %}
+  {%- if network is defined and network.get('calico', {}).get('enabled', False) %}
   collectd_calico_felix:
    plugin: python
    template: kubernetes/files/collectd_calico_felix.conf
@@ -73,7 +73,7 @@ local_plugin:
       k8s-proxy:
         match: hyperkube.*proxy
 {%- endif %}
-{%- if network is defined and network.get('engine', None) == 'calico' %}
+{%- if network is defined and network.get('calico', {}).get('enabled', False) %}
       calico-docker:
         match: docker run .*projectcalico/calico/node
       calico-felix:

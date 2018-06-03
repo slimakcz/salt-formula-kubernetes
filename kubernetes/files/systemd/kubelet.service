@@ -25,6 +25,7 @@ ExecStart=/usr/bin/hyperkube \
         $CADVISOR_PORT \
         $DAEMON_ARGS
 Restart=on-failure
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target

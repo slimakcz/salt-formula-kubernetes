@@ -22,7 +22,7 @@ spec:
       --v={{ master.get('verbosity', 2) }}
       --root-ca-file=/etc/kubernetes/ssl/ca-{{ master.ca }}.crt
       --leader-elect=true
-{%- for key, value in master.get('controller_manager', {}).get('daemon_opts', {}).iteritems() %}
+{%- for key, value in master.get('controller_manager', {}).get('daemon_opts', {}).items() %}
       --{{ key }}={{ value }}
 {%- endfor %}
       1>>/var/log/kube-controller-manager.log 2>&1

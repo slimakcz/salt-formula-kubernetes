@@ -55,7 +55,7 @@ kube-addon-manager_service:
 
 {%- if master.label is defined %}
 
-{%- for name,label in master.label.iteritems() %}
+{%- for name,label in master.label.items() %}
 
 {%- if label.enabled %}
 

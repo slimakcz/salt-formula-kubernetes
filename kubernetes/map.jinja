@@ -1,8 +1,8 @@
-{% set version = salt['cmd.shell']("(hyperkube --version 2> /dev/null || echo '0.0') | sed -e 's/-.*//g' -e 's/v//g' -e 's/Kubernetes //g' | awk -F'.' '{print $1 \".\" $2}'") %}
+{% set version = salt['cmd.shell']("(hyperkube --version kubelet 2> /dev/null || echo '0.0') | sed -e 's/-.*//g' -e 's/v//g' -e 's/Kubernetes //g' | awk -F'.' '{print $1 \".\" $2}'") %}
 
 {% set common = salt['grains.filter_by']({
     'Debian': {
-        'pkgs': ['curl', 'git', 'apt-transport-https', 'python-apt', 'socat', 'openssl'],
+        'pkgs': ['curl', 'git', 'apt-transport-https', 'python-apt', 'socat', 'openssl', 'conntrack'],
         'services': [],
         'version': version|float,
     },
@@ -93,3 +93,52 @@
         'config_type': 'default',
     },
 }, merge=salt['pillar.get']('kubernetes:control')) %}
+
+{%- if master.get('network', {}).get('engine') == 'calico' %}
+{% set calico = salt['grains.filter_by']({
+    'default': master.network.calico
+}, merge=salt['pillar.get']('kubernetes:master:network')) %}
+{% do calico.update({
+    'enabled': true,
+    'calicoctl_image': calico.calicoctl.image,
+    'cni_image': calico.cni.image,
+}) %}
+{% do master.network.calico.update(calico) %}
+{%- elif master.get('network', {}).get('engine') == 'opencontrail' %}
+{% set opencontrail = salt['grains.filter_by']({
+    'default': master.network.opencontrail
+}, merge=salt['pillar.get']('kubernetes:master:network')) %}
+{% do opencontrail.update({
+    'enabled': true,
+    'cni_image': opencontrail.contrail_cni.image,
+}) %}
+{% do master.network.opencontrail.update(opencontrail) %}
+{%- endif %}
+
+{%- if pool.get('network', {}).get('engine') == 'calico' %}
+{% set calico = salt['grains.filter_by']({
+    'default': pool.network.calico
+}, merge=salt['pillar.get']('kubernetes:pool:network')) %}
+{% do calico.update({
+    'enabled': true,
+    'calicoctl_image': calico.calicoctl.image,
+    'cni_image': calico.cni.image,
+}) %}
+{% do pool.network.calico.update(calico) %}
+{%- elif pool.get('network', {}).get('engine') == 'opencontrail' %}
+{% set opencontrail = salt['grains.filter_by']({
+    'default': pool.network.opencontrail
+}, merge=salt['pillar.get']('kubernetes:pool:network')) %}
+{% do opencontrail.update({
+    'enabled': true,
+    'cni_image': opencontrail.contrail_cni.image,
+}) %}
+{% do pool.network.opencontrail.update(opencontrail) %}
+{%- endif %}
+
+{%- set monitoring = salt['grains.filter_by']({
+  'default': {
+    'instance_minor_threshold_percent': 0.3,
+    'instance_major_threshold_percent': 0.6,
+  },
+}, grain='os_family', merge=salt['pillar.get']('kubernetes:monitoring')) %}

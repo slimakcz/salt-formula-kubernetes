@@ -12,22 +12,26 @@ DAEMON_ARGS="\
 --cluster_domain={{ common.addons.dns.domain|replace('_', '-') }} \
 --hostname-override={{ pool.host.name }} \
 --v={{ pool.get('verbosity', 2) }} \
+{%- if common.hyperkube.pause_image is defined %}
+--pod-infra-container-image={{ common.hyperkube.pause_image }} \
+{%- endif %}
+{%- if salt['pkg.version_cmp'](version,'1.8') >= 0 %}
+--fail-swap-on={{ pool.kubelet.fail_on_swap }} \
+{%- if common.addons.get('virtlet', {}).get('enabled') %}
+--feature-gates=MountPropagation=true \
+{%- endif %}
+{%- endif %}
 {%- if pillar.kubernetes.master is defined %}
 --node-labels=node-role.kubernetes.io/master=true \
-{%- if version|float >= 1.8 %}
---fail-swap-on={{ pool.kubelet.fail_on_swap }} \
-{%- endif %}
 {%-   if pillar.kubernetes.get('master', {}).get('unschedulable', 'false') %}
 --register-with-taints=node-role.kubernetes.io/master=:NoSchedule \
 {%-    endif -%}
 {%- else %}
 --node-labels=node-role.kubernetes.io/node=true \
 {%- endif %}
-{%- if pool.network.engine in ['calico', 'opencontrail'] %}
+{%- if pool.network.opencontrail is not defined or ( pool.network.opencontrail is defined and  pool.network.opencontrail.enabled == True ) %}
 --network-plugin=cni \
 --cni-bin-dir={{ pool.apiserver.get('cni_bin_dir', '/opt/cni/bin') }} \
-{%- else %}
---network-plugin-dir=/etc/cni/net.d \
 {%- endif %}
 --file-check-frequency={{ pool.kubelet.frequency }} \
 {%- if common.get('cloudprovider', {}).get('enabled') %}
@@ -38,7 +42,7 @@ DAEMON_ARGS="\
 {%- endif %}
 {%- if common.addons.get('virtlet', {}).get('enabled') %}
 --container-runtime={{ pool.get('container-runtime', 'remote') }} \
-{%- if version|float < 1.7 %}
+{%- if salt['pkg.version_cmp'](version,'1.7') < 0 %}
 --container-runtime-endpoint={{ pool.get('container-runtime-endpoint', '/var/run/criproxy.sock') }} \
 --image-service-endpoint={{ pool.get('image-service-endpoint', '/var/run/criproxy.sock') }} \
 {%- else %}
@@ -47,7 +51,7 @@ DAEMON_ARGS="\
 {%- endif %}
 --enable-controller-attach-detach={{ pool.get('enable-controller-attach-detach', 'false') }} \
 {%- endif %}
-{%- for key, value in pool.get('kubelet', {}).get('daemon_opts', {}).iteritems() %}
+{%- for key, value in pool.get('kubelet', {}).get('daemon_opts', {}).items() %}
 --{{ key }}={{ value }} \
 {%- endfor %}
 "

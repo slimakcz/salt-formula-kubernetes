@@ -15,5 +15,5 @@ spec:
     targetPort: 8082
   selector:
     k8s-app: heapster
-  deprecatedPublicIPs: ['{{ common.addons.heapster_influxdb.public_ip }}']
+  externalIPs: ['{{ common.addons.heapster_influxdb.public_ip }}']
   type: LoadBalancer

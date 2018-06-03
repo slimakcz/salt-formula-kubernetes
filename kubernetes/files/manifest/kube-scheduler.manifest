@@ -21,7 +21,7 @@ spec:
       --kubeconfig /etc/kubernetes/scheduler.kubeconfig
       --v={{ master.get('verbosity', 2) }}
       --leader-elect=true
-{%- for key, value in master.get('scheduler', {}).get('daemon_opts', {}).iteritems() %}
+{%- for key, value in master.get('scheduler', {}).get('daemon_opts', {}).items() %}
       --{{ key }}={{ value }}
 {%- endfor %}
       1>>/var/log/kube-scheduler.log 2>&1

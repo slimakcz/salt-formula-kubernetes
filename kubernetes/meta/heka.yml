@@ -4,14 +4,14 @@
 {% set kube_services = ('apiserver', 'scheduler', 'controller-manager') %}
 
 {%- if pool.get('enabled', False) %}
-{% set network = pool.get('network', []) %}
+{% set network = pool.get('network', {}) %}
 {%- else %}
 {%- if master.get('enabled', False) %}
-{% set network = master.get('network', []) %}
+{% set network = master.get('network', {}) %}
 {% endif %}
 {% endif %}
 
-{%- if network is defined and network.get('engine', None) == 'calico' %}
+{%- if network is defined and network.get('calico', {}).get('enabled', False) %}
 log_collector:
   decoder:
     calico_felix:
@@ -106,7 +106,7 @@ metric_collector:
         periods: 0
         function: last
 {%- endif %}
-{%- if network is defined and network.get('engine', None) == 'calico' %}
+{%- if network is defined and network.get('calico', {}).get('enabled', False) %}
     calico_docker:
       description: "There is no docker calico-node process running"
       severity: down
@@ -194,7 +194,7 @@ metric_collector:
       dimension:
         service: k8s-proxy-endpoint
 {%- endif %}
-{%- if network is defined and network.get('engine', None) == 'calico' %}
+{%- if network is defined and network.get('calico', {}).get('enabled', False) %}
     calico_docker:
       alerting: enabled
       triggers:
@@ -381,7 +381,7 @@ aggregator:
       dimension:
         cluster_name: k8s-master
         nagios_host: 00-top-clusters
-{%- if master.get('network', []).get('engine', None) == 'calico' %}
+{%- if master.network is defined and master.network.get('calico', {}).get('enabled', False) %}
     calico_docker:
       policy: availability_of_members
       alerting: enabled

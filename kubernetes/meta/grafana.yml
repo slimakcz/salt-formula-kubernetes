@@ -2,7 +2,7 @@
 {%- from "kubernetes/map.jinja" import master with context %}
 
 {%- if master.get('enabled', False) %}
-{% set network = master.get('network', []) %}
+{% set network = master.get('network', {}) %}
 {% endif %}
 
 dashboard:
@@ -10,7 +10,7 @@ dashboard:
     datasource: prometheus
     format: json
     template: kubernetes/files/grafana_dashboards/kubernetes_cluster_prometheus.json
-{%- if network is defined and network.get('engine') == 'calico' %}
+{%- if network is defined and network.get('calico', {}).get('enabled', False) %}
   calico-prometheus:
     datasource: prometheus
     format: json
@@ -20,7 +20,7 @@ dashboard:
     datasource: influxdb
     format: json
     template: kubernetes/files/grafana_dashboards/kubernetes_influxdb.json
-{%- if network is defined and network.get('engine') == 'calico' %}
+{%- if inetwork is defined and network.get('calico', {}).get('enabled', False) %}
   calico:
     datasource: influxdb
     format: json

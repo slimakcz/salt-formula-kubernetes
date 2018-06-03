@@ -2,7 +2,7 @@
 include:
   - kubernetes.control
 
-{%- for service_name, service in control.service.iteritems() %}
+{%- for service_name, service in control.service.items() %}
   {%- if service.enabled %}
 
 /srv/kubernetes/services/{{ service.cluster }}/{{ service_name }}-svc.yml:
@@ -33,7 +33,7 @@ include:
 
 {%- endfor %}
 
-{%- for node_name, node_grains in salt['mine.get']('*', 'grains.items').iteritems() %}
+{%- for node_name, node_grains in salt['mine.get']('*', 'grains.items').items() %}
 
   {%- if node_grains.get('kubernetes', {}).service is defined %}
     {%- set service = node_grains.get('kubernetes', {}).get('service', {}) %}

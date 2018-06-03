@@ -12,6 +12,10 @@ spec:
     metadata:
       labels:
         k8s-app: kube-dns-autoscaler
+      annotations:
+{%- if common.addons.dns.cni is defined %}
+        cni: {{ common.addons.dns.cni }}
+{%- endif %}
     spec:
       tolerations:
         - key: node-role.kubernetes.io/master
@@ -37,4 +41,4 @@ spec:
           - --poll-period-seconds={{ common.addons.dns.autoscaler.get('poll-period-seconds') }}
           {%- endif %}
           - --v=2
-
+      serviceAccountName: kube-dns-autoscaler

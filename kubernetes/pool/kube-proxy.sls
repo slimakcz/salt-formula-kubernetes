@@ -1,5 +1,4 @@
 {%- from "kubernetes/map.jinja" import pool with context %}
-{%- if pool.enabled and pool.network.engine != 'opencontrail' %}
 
 {%- if pool.get('container', 'true') %}
 
@@ -37,7 +36,7 @@
     - user: root
     - group: root
     - mode: 644
-    - contents: DAEMON_ARGS=" --logtostderr=true --v={{ pool.get('verbosity', 2) }} --kubeconfig=/etc/kubernetes/proxy.kubeconfig {%- if pool.network.engine == 'calico' %} --proxy-mode=iptables{% endif %}{%- for key, value in pool.get('proxy', {}).get('daemon_opts', {}).iteritems() %} --{{ key }}={{ value }}{%- endfor %}"
+    - contents: DAEMON_ARGS=" --logtostderr=true --v={{ pool.get('verbosity', 2) }} --kubeconfig=/etc/kubernetes/proxy.kubeconfig {%- if pool.network.get('calico', {}).get('enabled', False) %} --proxy-mode=iptables{% endif %}{%- for key, value in pool.get('proxy', {}).get('daemon_opts', {}).items() %} --{{ key }}={{ value }}{%- endfor %}"
 
 pool_services:
   service.running:
@@ -50,7 +49,5 @@ pool_services:
   {%- if grains.get('noservices') %}
   - onlyif: /bin/false
   {%- endif %}
-
-{%- endif %}
 
 {%- endif %}

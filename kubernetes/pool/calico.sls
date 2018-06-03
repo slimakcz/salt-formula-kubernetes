@@ -8,7 +8,7 @@
 
 copy-calico-ctl:
   cmd.run:
-    - name: docker run --rm -v /tmp/calico/:/tmp/calico/ --entrypoint cp {{ pool.network.calicoctl.image }} -v /calicoctl /tmp/calico/
+    - name: docker run --rm -v /tmp/calico/:/tmp/calico/ --entrypoint cp {{ pool.network.calico.calicoctl_image }} -v /calicoctl /tmp/calico/
     - require:
       - file: /tmp/calico/
     {%- if grains.get('noservices') %}
@@ -29,7 +29,7 @@ copy-calico-ctl:
 
 copy-calico-node:
   cmd.run:
-    - name: docker run --rm -v /tmp/calico/:/tmp/calico/ --entrypoint cp {{ pool.network.get('image', 'calico/node') }} -v /bin/birdcl /tmp/calico/
+    - name: docker run --rm -v /tmp/calico/:/tmp/calico/ --entrypoint cp {{ pool.network.calico.get('image', 'calico/node') }} -v /bin/birdcl /tmp/calico/
     - require:
       - file: /tmp/calico/
     {%- if grains.get('noservices') %}
@@ -50,7 +50,7 @@ copy-calico-node:
 
 copy-calico-cni:
   cmd.run:
-    - name: docker run --rm -v /tmp/calico/:/tmp/calico/ --entrypoint cp {{ pool.network.cni.image }} -vr /opt/cni/bin/ /tmp/calico/
+    - name: docker run --rm -v /tmp/calico/:/tmp/calico/ --entrypoint cp {{ pool.network.calico.cni_image }} -vr /opt/cni/bin/ /tmp/calico/
     - require:
       - file: /tmp/calico/
     {%- if grains.get('noservices') %}
@@ -106,7 +106,7 @@ copy-calico-cni:
     - dir_mode: 755
     - template: jinja
 
-{%- if pool.network.get('systemd', true) %}
+{%- if pool.network.calico.get('systemd', true) %}
 
 /etc/systemd/system/calico-node.service:
   file.managed:

@@ -12,6 +12,6 @@
 {{ master.token.monitoring }},system:monitoring,system:monitoring
 {%- endif %}
 {{ master.token.dns }},system:dns,system:dns
-{%- for name, user in master.auth.token.get('user', {}).iteritems() %}
+{%- for name, user in master.auth.token.get('user', {}).items() %}
 {{ user.token }},{{ user.name|default(name) }},{{ user.get('uid', user.get('name', name)) }}{% if user.groups is defined %},"{{ user.groups|join(',') }}"{% endif %}
 {%- endfor %}

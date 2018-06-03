@@ -2,8 +2,6 @@ kubernetes:
   common:
     cluster_domain: cluster.local
     cluster_name: cluster
-    network:
-      engine: none
     hyperkube:
       image: hyperkube-amd64:v1.6.4-3
       hash: hnsj0XqABgrSww7Nqo7UVTSZLJUt2XRd
@@ -42,7 +40,9 @@ kubernetes:
         hosts:
         - cmp01
         - cmp02
-        image: mirantis/virtlet:v0.8.0
+        image: mirantis/virtlet:v1.0.3
+    monitoring:
+      backend: prometheus
   master:
     admin:
       password: password
@@ -68,18 +68,18 @@ kubernetes:
       address: 10.0.175.100
       allow_privileged: true
     network:
-      engine: calico
-      hash: fb5e30ebe6154911a66ec3fb5f1195b2
-      private_ip_range: 10.150.0.0/16
-      version: v0.19.0
-      etcd:
-        members:
-        - host: 127.0.0.1
-          port: 4001
-        - host: 127.0.0.1
-          port: 4001
-        - host: 127.0.0.1
-          port: 4001
+      calico:
+        enabled: true
+        calicoctl_image: calico/ctl
+        cni_image: calico/cni
+        etcd:
+          members:
+          - host: 127.0.0.1
+            port: 4001
+          - host: 127.0.0.1
+            port: 4001
+          - host: 127.0.0.1
+            port: 4001
     service_addresses: 10.254.0.0/16
     storage:
       engine: glusterfs

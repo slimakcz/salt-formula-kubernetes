@@ -2,8 +2,6 @@ kubernetes:
   common:
     cluster_domain: cluster.local
     cluster_name: cluster
-    network:
-      engine: opencontrail
     hyperkube:
       image: hyperkube-amd64:v1.6.4-3
       hash: hnsj0XqABgrSww7Nqo7UVTSZLJUt2XRd
@@ -39,7 +37,7 @@ kubernetes:
       virtlet:
         enabled: true
         namespace: kube-system
-        image: mirantis/virtlet:v0.8.0
+        image: mirantis/virtlet:v1.0.3
         hosts:
         - cmp01
         - cmp02
@@ -47,6 +45,8 @@ kubernetes:
         enabled: true
         namespace: kube-system
         image: yashulyak/contrail-controller:latest
+    monitoring:
+      backend: prometheus
   master:
     admin:
       password: password
@@ -72,21 +72,22 @@ kubernetes:
       address: 10.0.175.100
       allow_privileged: true
     network:
-      engine: opencontrail
-      config:
-        api:
-          host: 10.0.170.70
-      port: 8082
-      default_domain: default-domain
-      default_project: default-domain:default-project
-      public_network: default-domain:default-project:Public
-      public_ip_range: 185.22.97.128/26
-      private_ip_range: 10.150.0.0/16
-      service_cluster_ip_range: 10.254.0.0/16
-      network_label: name
-      service_label: uses
-      cluster_service: kube-system/default
-      image: tianon/true
+      opencontrail:
+        enabled: true
+        config:
+          api:
+            host: 10.0.170.70
+        port: 8082
+        default_domain: default-domain
+        default_project: default-domain:default-project
+        public_network: default-domain:default-project:Public
+        public_ip_range: 185.22.97.128/26
+        private_ip_range: 10.150.0.0/16
+        service_cluster_ip_range: 10.254.0.0/16
+        network_label: name
+        service_label: uses
+        cluster_service: kube-system/default
+        image: tianon/true
     service_addresses: 10.254.0.0/16
     storage:
       engine: glusterfs

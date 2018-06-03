@@ -1,5 +1,5 @@
 {%- from "kubernetes/map.jinja" import master with context -%}
 {{ master.admin.password }},{{ master.admin.username }},admin
-{%- for name, user in master.auth.basic.get('user', {}).iteritems() %}
+{%- for name, user in master.auth.basic.get('user', {}).items() %}
 {{ user.password }},{{ user.name|default(name) }},{{ user.get('uid', user.get('name', name)) }}{% if user.groups is defined %},"{{ user.groups|join(',') }}"{% endif %}
 {%- endfor %}

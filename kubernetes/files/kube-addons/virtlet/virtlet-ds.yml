@@ -1,9 +1,11 @@
 {%- from "kubernetes/map.jinja" import common with context -%}
 {%- from "kubernetes/map.jinja" import master with context -%}
+{%- from "kubernetes/map.jinja" import version %}
 ---
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
+  creationTimestamp: null
   name: virtlet
   namespace: {{ common.addons.virtlet.namespace }}
   labels:
@@ -11,21 +13,11 @@ metadata:
 spec:
   template:
     metadata:
-      name: virtlet
+      creationTimestamp: null
       labels:
         runtime: virtlet
+      name: virtlet
     spec:
-      hostNetwork: true
-      {%- if master.network.engine != "opencontrail" %}
-      dnsPolicy: ClusterFirstWithHostNet
-      {%- endif %}
-      # hostPID is true to (1) enable VMs to survive virtlet container restart
-      # (to be checked) and (2) to enable the use of nsenter in init container
-      hostPID: true
-      # bootstrap procedure needs to create a configmap in kube-system namespace
-      serviceAccountName: virtlet
-
-      # only run Virtlet pods on the nodes with extraRuntime=virtlet label
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -35,50 +27,34 @@ spec:
                 operator: In
                 values:
                 - virtlet
-
-      initContainers:
-      # The init container first copies virtlet's flexvolume driver
-      # to the default kubelet plugin dir to have it in the proper place by the
-      # time kubelet is restarted by CRI proxy bootstrap procedure.
-      # After that it checks if there's already saved kubelet config
-      # and considers that CRI proxy bootstrap is already done if it exists.
-      # If it doesn't, it drops criproxy binary into /opt/criproxy/bin
-      # if it's not already there and then starts criproxy installation.
-      # The possibility to put criproxy binary in advance into
-      # /opt/criproxy/bin may be helpful for the purpose of
-      # debugging criproxy
-      # At the end it ensures that /var/lib/libvirt/images exists on node.
-      - name: prepare-node
+      containers:
+      - command:
+        - /libvirt.sh
+        env:
+        - name: VIRTLET_SRIOV_SUPPORT
+          valueFrom:
+            configMapKeyRef:
+              key: sriov_support
+              name: virtlet-config
+              optional: true
+        - name: VIRTLET_DISABLE_KVM
+          valueFrom:
+            configMapKeyRef:
+              key: disable_kvm
+              name: virtlet-config
+              optional: true
         image: {{ common.addons.virtlet.image }}
         imagePullPolicy: IfNotPresent
-        command:
-        - /prepare-node.sh
-        volumeMounts:
-        - name: k8s-flexvolume-plugins-dir
-          mountPath: /kubelet-volume-plugins
-        - name: run
-          mountPath: /run
-        - name: dockersock
-          mountPath: /var/run/docker.sock
-        - name: log
-          mountPath: /hostlog
-        # for ensuring that /var/lib/libvirt/images exists on node
-        - name: var-lib
-          mountPath: /host-var-lib
-        - name: criproxybin
-          mountPath: /opt/criproxy/bin
-        - name: criproxyconf
-          mountPath: /etc/criproxy
+        name: libvirt
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - socat - UNIX:/var/run/libvirt/libvirt-sock-ro </dev/null
+        resources: {}
         securityContext:
           privileged: true
-
-      containers:
-      - name: libvirt
-        image: {{ common.addons.virtlet.image }}
-        # In case we inject local virtlet image we want to use it not officially available one
-        imagePullPolicy: IfNotPresent
-        command:
-        - /libvirt.sh
         volumeMounts:
         - mountPath: /sys/fs/cgroup
           name: cgroup
@@ -89,6 +65,7 @@ spec:
           name: boot
           readOnly: true
         - mountPath: /run
+          mountPropagation: Bidirectional
           name: run
         - mountPath: /var/lib/virtlet
           name: virtlet
@@ -96,32 +73,79 @@ spec:
           name: libvirt
         - mountPath: /var/run/libvirt
           name: libvirt-sockets
-        # the log dir is needed here because otherwise libvirt will produce errors
-        # like this:
-        # Unable to pre-create chardev file '/var/log/vms/afd75bbb-8e97-11e7-9561-02420ac00002/cirros-vm_0.log': No such file or directory
-        - name: vms-log
-          mountPath: /var/log/vms
-        - name: dev
-          mountPath: /dev
-        securityContext:
-          privileged: true
-        env:
+        - mountPath: /var/log/vms
+          name: vms-log
+        - mountPath: /var/log/libvirt
+          name: libvirt-log
+        - mountPath: /dev
+          name: dev
+      - env:
         - name: VIRTLET_DISABLE_KVM
           valueFrom:
             configMapKeyRef:
-              name: virtlet-config
               key: disable_kvm
+              name: virtlet-config
               optional: true
-      - name: virtlet
+        - name: VIRTLET_DOWNLOAD_PROTOCOL
+          valueFrom:
+            configMapKeyRef:
+              key: download_protocol
+              name: virtlet-config
+              optional: true
+        - name: VIRTLET_LOGLEVEL
+          valueFrom:
+            configMapKeyRef:
+              key: loglevel
+              name: virtlet-config
+              optional: true
+        - name: VIRTLET_CALICO_SUBNET
+          valueFrom:
+            configMapKeyRef:
+              key: calico-subnet
+              name: virtlet-config
+              optional: true
+        - name: IMAGE_REGEXP_TRANSLATION
+          valueFrom:
+            configMapKeyRef:
+              key: image_regexp_translation
+              name: virtlet-config
+              optional: true
+        - name: VIRTLET_DISABLE_LOGGING
+          valueFrom:
+            configMapKeyRef:
+              key: disable_logging
+              name: virtlet-config
+              optional: true
+        - name: VIRTLET_SRIOV_SUPPORT
+          valueFrom:
+            configMapKeyRef:
+              key: sriov_support
+              name: virtlet-config
+              optional: true
+        - name: VIRTLET_RAW_DEVICES
+          valueFrom:
+            configMapKeyRef:
+              key: raw_devices
+              name: virtlet-config
+              optional: true
+        - name: IMAGE_TRANSLATIONS_DIR
+          value: /etc/virtlet/images
         image: {{ common.addons.virtlet.image }}
-        # In case we inject local virtlet image we want to use it not officially available one
         imagePullPolicy: IfNotPresent
+        name: virtlet
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - socat - UNIX:/run/virtlet.sock </dev/null
+        resources: {}
+        securityContext:
+          privileged: true
         volumeMounts:
-        - mountPath: /var/lib/etcd
-          name: etcd
         - mountPath: /run
+          mountPropagation: Bidirectional
           name: run
-        # /boot and /lib/modules are required by supermin
         - mountPath: /lib/modules
           name: modules
           readOnly: true
@@ -132,100 +156,74 @@ spec:
           name: virtlet
         - mountPath: /var/lib/libvirt
           name: libvirt
-        - mountPath: /etc/kubernetes
-          name: kubernetes
-        - mountPath: /etc/cni
-          name: cniconf
-        - mountPath: /opt/cni/bin.orig
-          name: cnibin
         - mountPath: /var/run/libvirt
           name: libvirt-sockets
-        - mountPath: /var/lib/cni
-          name: cnidata
         - mountPath: /usr/libexec/kubernetes/kubelet-plugins/volume/exec
           name: k8s-flexvolume-plugins-dir
-          # below `:shared` is unofficial way to pass this option docker
-          # which then will allow virtlet to see what kubelet mounts in
-          # underlaying directories, after virtlet container is created
-        - mountPath: /var/lib/kubelet/pods:shared
+        - mountPath: /var/lib/kubelet/pods
+          mountPropagation: Bidirectional
           name: k8s-pods-dir
-        - name: vms-log
-          mountPath: /var/log/vms
-        {%- if master.network.engine == "opencontrail" %}
-        - name: contrail-log
-          mountPath: /var/log/contrail
-        - name: contrail-data
-          mountPath: /var/lib/contrail
-        {%- endif %}
+        - mountPath: /var/log/vms
+          name: vms-log
         - mountPath: /etc/virtlet/images
           name: image-name-translations
-        - name: pods-log
-          mountPath: /kubernetes-log
-        securityContext:
-          privileged: true
-        env:
-        - name: VIRTLET_DISABLE_KVM
-          valueFrom:
-            configMapKeyRef:
-              name: virtlet-config
-              key: disable_kvm
-              optional: true
-        - name: VIRTLET_DOWNLOAD_PROTOCOL
-          valueFrom:
-            configMapKeyRef:
-              name: virtlet-config
-              key: download_protocol
-              optional: true
-        - name: VIRTLET_LOGLEVEL
-          valueFrom:
-            configMapKeyRef:
-              name: virtlet-config
-              key: loglevel
-              optional: true
-        - name: VIRTLET_CALICO_SUBNET
-          valueFrom:
-            configMapKeyRef:
-              name: virtlet-config
-              key: calico-subnet
-              optional: true
-        - name: IMAGE_REGEXP_TRANSLATION
-          valueFrom:
-            configMapKeyRef:
-              name: virtlet-config
-              key: image_regexp_translation
-              optional: true
-        - name: IMAGE_TRANSLATIONS_DIR
-          value: /etc/virtlet/images
-        - name: KUBERNETES_POD_LOGS
-          value: "/kubernetes-log"
-        # TODO: should we rename it?
-        - name: VIRTLET_VM_LOG_LOCATION
-          value: "1"
-      - name: vms
+        - mountPath: /var/log/pods
+          name: pods-log
+      - command:
+        - /vms.sh
         image: {{ common.addons.virtlet.image }}
         imagePullPolicy: IfNotPresent
-        command:
-        - /vms.sh
+        name: vms
+        resources: {}
         volumeMounts:
         - mountPath: /var/lib/virtlet
           name: virtlet
         - mountPath: /var/lib/libvirt
           name: libvirt
-        - name: vms-log
-          mountPath: /var/log/vms
-        - name: dev
-          mountPath: /dev
+        - mountPath: /var/log/vms
+          name: vms-log
+        - mountPath: /dev
+          name: dev
+        - mountPath: /lib/modules
+          name: modules
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      hostPID: true
+      initContainers:
+      - command:
+        - /prepare-node.sh
+        env:
+        - name: VIRTLET_DISABLE_KVM
+          valueFrom:
+            configMapKeyRef:
+              key: disable_kvm
+              name: virtlet-config
+              optional: true
+        image: {{ common.addons.virtlet.image }}
+        imagePullPolicy: IfNotPresent
+        name: prepare-node
+        resources: {}
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /kubelet-volume-plugins
+          name: k8s-flexvolume-plugins-dir
+        - mountPath: /run
+          mountPropagation: Bidirectional
+          name: run
+        - mountPath: /var/run/docker.sock
+          name: dockersock
+        - mountPath: /hostlog
+          name: log
+        - mountPath: /host-var-lib
+          name: var-lib
+        - mountPath: /dev
+          name: dev
+      serviceAccountName: virtlet
       volumes:
-      # /dev is needed for host raw device access
       - hostPath:
           path: /dev
         name: dev
-      - hostPath:
-          path: /etc/kubernetes
-        name: kubernetes
-      - hostPath:
-          path: /var/lib/etcd
-        name: etcd
       - hostPath:
           path: /sys/fs/cgroup
         name: cgroup
@@ -238,9 +236,6 @@ spec:
       - hostPath:
           path: /run
         name: run
-      # TODO: don't hardcode docker socket location here
-      # This will require CRI proxy installation to run
-      # in host mount namespace.
       - hostPath:
           path: /var/run/docker.sock
         name: dockersock
@@ -250,21 +245,6 @@ spec:
       - hostPath:
           path: /var/lib/libvirt
         name: libvirt
-      - hostPath:
-          path: /etc/cni
-        name: cniconf
-      - hostPath:
-          path: /opt/cni/bin
-        name: cnibin
-      - hostPath:
-          path: /var/lib/cni
-        name: cnidata
-      - hostPath:
-          path: /opt/criproxy/bin
-        name: criproxybin
-      - hostPath:
-          path: /etc/criproxy
-        name: criproxyconf
       - hostPath:
           path: /var/log
         name: log
@@ -281,31 +261,67 @@ spec:
           path: /var/log/virtlet/vms
         name: vms-log
       - hostPath:
+          path: /var/log/libvirt
+        name: libvirt-log
+      - hostPath:
           path: /var/run/libvirt
         name: libvirt-sockets
       - hostPath:
           path: /var/log/pods
         name: pods-log
+      - hostPath:
+          path: /var/run/netns
+        name: netns-dir
       - configMap:
           name: virtlet-image-translations
         name: image-name-translations
-      {%- if master.network.engine == "opencontrail" %}
-      - hostPath:
-          path: /var/log/contrail
-        name: contrail-log
-      - hostPath:
-          path: /var/lib/contrail
-        name: contrail-data
-      - hostPath:
-          path: /virtlet
-        name: virtlet-bin
-      {%- endif %}
+  updateStrategy: {}
+status:
+  currentNumberScheduled: 0
+  desiredNumberScheduled: 0
+  numberMisscheduled: 0
+  numberReady: 0
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  name: virtlet
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: virtlet
+subjects:
+- kind: ServiceAccount
+  name: virtlet
+  namespace: {{ common.addons.virtlet.namespace }}
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
 metadata:
-  name: configmap-reader
+  creationTimestamp: null
+  name: virtlet
   namespace: {{ common.addons.virtlet.namespace }}
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - create
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: configmap-reader
   labels:
     addonmanager.kubernetes.io/mode: Reconcile
 rules:
@@ -317,10 +333,29 @@ rules:
   - get
   - list
   - watch
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: virtlet-userdata-reader
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - secrets
+  verbs:
+  - get
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
+  creationTimestamp: null
   name: kubelet-node-binding
   labels:
     addonmanager.kubernetes.io/mode: Reconcile
@@ -332,33 +367,52 @@ subjects:
 - apiGroup: rbac.authorization.k8s.io
   kind: Group
   name: system:nodes
-  namespace: {{ common.addons.virtlet.namespace }}
----
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1beta1
-metadata:
-  name: virtlet-crd
-  namespace: {{ common.addons.virtlet.namespace }}
-  labels:
-    addonmanager.kubernetes.io/mode: Reconcile
-rules:
-  - apiGroups:
-      - "apiextensions.k8s.io"
-    resources:
-      - customresourcedefinitions
-    verbs:
-      - create
-  - apiGroups:
-      - "virtlet.k8s"
-    resources:
-      - virtletimagemappings
-    verbs:
-      - list
-      - get
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
+  creationTimestamp: null
+  name: vm-userdata-binding
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: virtlet-userdata-reader
+subjects:
+- kind: ServiceAccount
+  name: virtlet
+  namespace: {{ common.addons.virtlet.namespace }}
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: virtlet-crd
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+rules:
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - create
+- apiGroups:
+  - virtlet.k8s
+  resources:
+  - virtletimagemappings
+  verbs:
+  - list
+  - get
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
   name: virtlet-crd
   labels:
     addonmanager.kubernetes.io/mode: Reconcile
@@ -370,10 +424,12 @@ subjects:
 - kind: ServiceAccount
   name: virtlet
   namespace: {{ common.addons.virtlet.namespace }}
+
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
+  creationTimestamp: null
   name: virtlet
   namespace: {{ common.addons.virtlet.namespace }}
   labels:
@@ -384,7 +440,7 @@ data:
   images.yml: |
     translations:
       - name: cirros
-        url: https://github.com/mirantis/virtlet/releases/download/v0.8.2/cirros.img
+        url: https://github.com/mirantis/virtlet/releases/download/v0.9.3/cirros.img
 kind: ConfigMap
 metadata:
   name: virtlet-image-translations

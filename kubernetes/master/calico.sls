@@ -21,15 +21,33 @@
     - dir_mode: 755
     - template: jinja
 
+/tmp/calico/:
+  file.directory:
+      - user: root
+      - group: root
+
+copy-calico-ctl:
+  cmd.run:
+    - name: docker run --rm -v /tmp/calico/:/tmp/calico/ --entrypoint cp {{ master.network.calico.calicoctl_image }} -v /calicoctl /tmp/calico/
+    - require:
+      - file: /tmp/calico/
+    {%- if grains.get('noservices') %}
+    - onlyif: /bin/false
+    {%- endif %}
+
 /usr/bin/calicoctl:
   file.managed:
-     - source: {{ master.network.get('source', 'https://github.com/projectcalico/calico-containers/releases/download/') }}{{ master.network.version }}/calicoctl
-     - source_hash: md5={{ master.network.hash }}
-     - mode: 751
-     - user: root
-     - group: root
+    - source: /tmp/calico/calicoctl
+    - mode: 751
+    - user: root
+    - group: root
+    - require:
+      - cmd: copy-calico-ctl
+    {%- if grains.get('noservices') %}
+    - onlyif: /bin/false
+    {%- endif %}
 
-{%- if master.network.get('systemd', true) %}
+{%- if master.network.calico.get('systemd', true) %}
 
 /etc/systemd/system/calico-node.service:
   file.managed:

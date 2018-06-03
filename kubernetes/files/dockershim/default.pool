@@ -13,6 +13,9 @@ DAEMON_ARGS="\
 --cluster_domain={{ common.addons.dns.domain|replace('_', '-') }} \
 --hostname-override={{ pool.host.name }} \
 --v={{ pool.get('verbosity', 2) }} \
+{%- if common.hyperkube.pause_image is defined %}
+--pod-infra-container-image={{ common.hyperkube.pause_image }} \
+{%- endif %}
 {%- if pillar.kubernetes.master is defined %}
 --node-labels=node-role.kubernetes.io/master=true \
 {%-   if pillar.kubernetes.get('master', {}).get('unschedulable', 'false') %}
@@ -21,12 +24,8 @@ DAEMON_ARGS="\
 {%- else %}
 --node-labels=node-role.kubernetes.io/node=true \
 {%- endif %}
-{%- if pool.network.engine in ['calico', 'opencontrail'] %}
 --network-plugin=cni \
 --cni-bin-dir={{ pool.apiserver.get('cni_bin_dir', '/opt/cni/bin') }} \
-{%- else %}
---network-plugin-dir=/etc/cni/net.d \
-{%- endif %}
 --file-check-frequency={{ pool.kubelet.frequency }} \
 {%- if common.get('cloudprovider', {}).get('enabled') %}
 --cloud-provider={{ common.cloudprovider.provider }} \
@@ -35,7 +34,7 @@ DAEMON_ARGS="\
 {%- endif %}
 {%- endif %}
 --enable-controller-attach-detach={{ pool.get('enable-controller-attach-detach', 'false') }} \
-{%- for key, value in pool.get('kubelet', {}).get('daemon_opts', {}).iteritems() %}
+{%- for key, value in pool.get('kubelet', {}).get('daemon_opts', {}).items() %}
 --{{ key }}={{ value }} \
 {%- endfor %}
 "
